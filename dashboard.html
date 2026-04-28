@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pegasus Trading Tools — Market Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080600;--bg2:#131109;--bg3:#1a1810;--bg4:#0c0b08;
+  --border:#2e2a18;--border2:#3a2e00;
+  --gold:#D4AF37;--gold2:#F0D060;--gold-dim:#7a6a3a;--gold-ghost:#4a3a10;
+  --green:#00C97A;--green2:#00FF9D;--green-bg:rgba(0,201,122,.1);
+  --red:#FF4455;--red-bg:rgba(255,68,85,.1);
+  --neu:#7A9AB8;--neu-bg:rgba(122,154,184,.1);
+  --text:#e8ddb8;--text-dim:#7a6a3a;--text-bright:#f0e8c8;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg4)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* UTILS */
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--neu)}.gold{color:var(--gold)}
+.mono{font-family:var(--mono)}
+
+/* ── LOADING ── */
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;text-align:center;padding:20px}
+.spin{width:38px;height:38px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading img{width:100px;height:100px;object-fit:contain}
+#loading .ls{font-family:var(--mono);font-size:10px;color:var(--gold-dim);letter-spacing:2px}
+#loading .lh{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);max-width:340px;line-height:1.7;margin-top:4px}
+#rbt{display:none;padding:7px 18px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.25);border-radius:2px;color:var(--gold);cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:1px;margin-top:4px}
+#rbt:hover{background:rgba(212,175,55,.16)}
+
+/* ── TOPBAR ── */
+.topbar{background:linear-gradient(135deg,#0c0b08 0%,#1e1a08 50%,#0c0b08 100%);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-logo{width:40px;height:40px;object-fit:contain;border-radius:3px}
+.brand-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gold);letter-spacing:3px}
+.brand-sub{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:3px;margin-top:2px}
+.topright{display:flex;align-items:center;gap:14px}
+.live-dot{width:7px;height:7px;background:var(--gold-dim);border-radius:50%;display:inline-block;transition:all .3s}
+.live-dot.activo{background:var(--green);box-shadow:0 0 7px rgba(0,201,122,.6);animation:blink 2s ease-in-out infinite}
+.live-dot.error{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#status-lbl{font-family:var(--mono);font-size:9px;color:var(--gold-dim);letter-spacing:2px}
+#clk{font-family:var(--mono);font-size:10px;color:var(--gold-ghost)}
+#next-upd{font-family:var(--mono);font-size:9px;color:var(--gold-ghost)}
+.ref-btn{padding:4px 11px;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--gold-dim);cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:1px;transition:border-color .2s,color .2s}
+.ref-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ── MAIN TABS ── */
+.tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);padding:0 18px;gap:2px}
+.tab{font-family:var(--mono);font-size:9px;letter-spacing:2px;padding:9px 14px;cursor:pointer;color:var(--gold-dim);border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;white-space:nowrap}
+.tab:hover{color:var(--gold)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── BODY ── */
+.body{padding:13px 18px;max-width:1400px;margin:0 auto}
+
+/* ── BRIEF ── */
+.brief{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--gold);border-radius:3px;padding:10px 14px;margin-bottom:11px;position:relative;overflow:hidden}
+.brief::before{content:'';position:absolute;top:0;left:0;right:0;height:100%;background:linear-gradient(90deg,rgba(212,175,55,.04) 0%,transparent 40%);pointer-events:none}
+.brief-lbl{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:3px;margin-bottom:5px}
+.brief-txt{font-size:12px;color:var(--text);line-height:1.65}
+.brief-txt b{color:var(--gold)}
+
+/* ── MACRO STRIP ── */
+.macro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px}
+@media(max-width:600px){.macro-strip{grid-template-columns:repeat(2,1fr)}}
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:8px 11px}
+.mc-lbl{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:3px}
+.mc-val{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1}
+.mc-sub{font-family:var(--mono);font-size:8px;margin-top:2px}
+
+/* ── ASSET TABS ── */
+.asset-tabs{display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap}
+.atab{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:5px 12px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--gold-dim);transition:all .15s;text-transform:uppercase;white-space:nowrap}
+.atab:hover{border-color:var(--gold);color:var(--gold)}
+.atab.active{background:var(--bg3);border-color:var(--gold);color:var(--gold)}
+.atab.active.sig-up{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.atab.active.sig-dn{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+
+/* ── DETAIL PANEL ── */
+.detail{background:var(--bg2);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.detail-header{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.detail-name{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--gold);letter-spacing:2px}
+.detail-ticker{font-family:var(--mono);font-size:9px;color:var(--gold-dim);letter-spacing:2px;margin-top:2px}
+.detail-price{text-align:right}
+.d-price{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text-bright)}
+.d-chg{font-family:var(--mono);font-size:11px;margin-top:3px}
+
+/* Signal hero */
+.signal-hero{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:18px}
+.sig-badge{padding:7px 18px;border-radius:3px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:2px;white-space:nowrap;flex-shrink:0}
+.sig-bull{background:rgba(0,201,122,.15);color:var(--green);border:1px solid rgba(0,201,122,.3)}
+.sig-bull-strong{background:rgba(0,255,157,.15);color:var(--green2);border:1px solid rgba(0,255,157,.4)}
+.sig-bear{background:rgba(255,68,85,.15);color:var(--red);border:1px solid rgba(255,68,85,.3)}
+.sig-neu{background:rgba(122,154,184,.12);color:var(--neu);border:1px solid rgba(122,154,184,.25)}
+.sig-reason{font-size:12px;color:#c8b870;line-height:1.65;flex:1}
+
+/* Score mini bar inside signal hero */
+.score-row{display:flex;align-items:center;gap:7px;margin-top:8px}
+.score-trk{flex:1;height:4px;background:linear-gradient(to right,var(--red),var(--border2) 50%,var(--green));border-radius:2px;position:relative}
+.score-pin{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--gold);transform:translateX(-50%);box-shadow:0 0 6px rgba(212,175,55,.6)}
+.score-num{font-family:var(--mono);font-size:11px;font-weight:600;min-width:30px;text-align:right}
+
+/* 2-col detail grid */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+@media(max-width:700px){.detail-grid{grid-template-columns:1fr}}
+.detail-col{padding:13px 15px}
+.detail-col:first-child{border-right:1px solid var(--border)}
+.sec-hdr{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:3px;border-bottom:1px solid var(--border2);padding-bottom:5px;margin-bottom:9px}
+
+/* Chart */
+.chart-area{height:110px;margin-bottom:10px}
+.chart-area canvas{width:100%;height:110px;display:block}
+
+/* Var list */
+.var-list{display:flex;flex-direction:column;gap:4px}
+.var-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg4);border:1px solid var(--bg3);border-radius:2px;padding:5px 9px}
+.var-n{font-family:var(--mono);font-size:9px;color:var(--gold-dim);letter-spacing:1px}
+.var-v{font-family:var(--mono);font-size:10px;font-weight:600}
+
+/* Sentiment */
+.sent-wrap{margin-bottom:10px}
+.sent-bar-row{display:flex;align-items:center;gap:9px;margin-top:8px}
+.sent-bar-bg{flex:1;background:var(--bg4);border-radius:3px;height:7px;overflow:hidden;display:flex}
+.sent-bull-fill{height:7px;background:var(--green);border-radius:3px 0 0 3px}
+.sent-bear-fill{height:7px;background:var(--red);border-radius:0 3px 3px 0}
+.sent-pct{font-family:var(--mono);font-size:11px;font-weight:600;min-width:32px}
+
+/* Headlines */
+.headlines{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.hl{background:var(--bg4);border-left:2px solid var(--border);padding:5px 9px;font-size:11px;color:#c8b870;line-height:1.45;border-radius:0 2px 2px 0}
+.hl.hl-up{border-left-color:var(--green)}
+.hl.hl-dn{border-left-color:var(--red)}
+.hl.hl-neu{border-left-color:var(--neu)}
+.hl-src{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);margin-top:2px}
+.hl-empty{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);letter-spacing:.5px;padding:4px 0}
+
+/* Projection */
+.proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.pj{background:var(--bg4);border-radius:3px;padding:9px 10px;text-align:center}
+.pj.opt{border-top:2px solid var(--green)}
+.pj.base{border-top:2px solid var(--gold)}
+.pj.pes{border-top:2px solid var(--red)}
+.pj-lbl{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;margin-bottom:4px}
+.pj.opt .pj-lbl{color:var(--green)}.pj.base .pj-lbl{color:var(--gold)}.pj.pes .pj-lbl{color:var(--red)}
+.pj-val{font-family:var(--mono);font-size:14px;font-weight:600;margin-bottom:3px}
+.pj.opt .pj-val{color:var(--green)}.pj.base .pj-val{color:var(--gold)}.pj.pes .pj-val{color:var(--red)}
+.pj-sub{font-family:var(--mono);font-size:8px;color:var(--gold-dim);line-height:1.4}
+
+/* Entry box */
+.entry-box{padding:13px 15px;border-bottom:1px solid var(--border)}
+.entry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.entry-card{background:var(--bg4);border-radius:3px;padding:8px 11px;text-align:center;border:1px solid transparent}
+.entry-card.entry-main{border-color:rgba(0,201,122,.25)}
+.entry-card.stop-main{border-color:rgba(255,68,85,.25)}
+.entry-card.tp-main{border-color:rgba(212,175,55,.25)}
+.entry-card.wait-main{border-color:rgba(122,154,184,.2)}
+.ec-lbl{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:1.5px;margin-bottom:4px}
+.ec-val{font-family:var(--mono);font-size:13px;font-weight:600}
+.ec-sub{font-family:var(--mono);font-size:8px;color:var(--gold-dim);margin-top:3px}
+.disclaimer{margin-top:8px;padding:6px 9px;background:var(--bg4);border-radius:2px;border:1px solid var(--bg3)}
+.disclaimer span{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);letter-spacing:.5px}
+
+/* ── SWING TAB ── */
+.swing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+@media(max-width:600px){.swing-grid{grid-template-columns:1fr 1fr}}
+.sw-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:11px 13px}
+.sw-asset{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--gold);letter-spacing:1px;margin-bottom:5px}
+.sw-sig{font-family:var(--mono);font-size:11px;font-weight:600;margin-bottom:3px}
+.sw-score{font-family:var(--mono);font-size:8px;color:var(--gold-dim);margin-bottom:2px}
+.sw-horizon{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:1px}
+
+/* ── MACRO TAB ── */
+.macro-full-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px}
+@media(max-width:700px){.macro-full-grid{grid-template-columns:1fr 1fr}}
+.mf{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--border);border-radius:3px;padding:10px 13px}
+.mf.gold-top{border-top-color:var(--gold)}
+.mf.red-top{border-top-color:var(--red)}
+.mf.green-top{border-top-color:var(--green)}
+.mf-lbl{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:4px}
+.mf-val{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1}
+.mf-sub{font-family:var(--mono);font-size:8px;color:var(--gold-dim);margin-top:3px}
+
+/* ── ALERTS TAB ── */
+.alert-item{display:flex;align-items:flex-start;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:9px 13px;margin-bottom:6px}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.al-body{flex:1}
+.al-txt{font-size:12px;color:#c8b870;line-height:1.5}
+.al-meta{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);margin-top:3px}
+.al-time{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);flex-shrink:0;margin-top:1px}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--border);padding:8px 18px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:8px}
+.footer span{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);letter-spacing:1px}
+
+/* Loading placeholder inside detail */
+.detail-loading{padding:40px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--gold-dim);letter-spacing:2px}
+
+/* ── RESUMEN EJECUTIVO ── */
+.resumen{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid var(--border);background:var(--bg4)}
+.res-cell{padding:11px 14px;border-right:1px solid var(--border);text-align:center}
+.res-cell:last-child{border-right:none}
+.res-lbl{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.res-val{font-family:var(--mono);font-size:14px;font-weight:600;line-height:1}
+.res-sub{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);margin-top:3px}
+.badge-setup-si{color:var(--green);background:var(--green-bg);border:1px solid rgba(0,201,122,.3);padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:1px}
+.badge-setup-no{color:var(--neu);background:var(--neu-bg);border:1px solid rgba(122,154,184,.25);padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:1px}
+.badge-setup-wait{color:var(--gold);background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:1px}
+.grade-A{color:var(--green)}.grade-B{color:var(--gold)}.grade-C{color:var(--neu)}.grade-X{color:var(--gold-dim)}
+
+/* ── MACRO IMPACT ── */
+.macro-impact{display:flex;flex-direction:column;gap:4px}
+.mi-row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--bg4);border-radius:2px}
+.mi-indicator{font-family:var(--mono);font-size:9px;color:var(--gold-dim);width:52px;flex-shrink:0;letter-spacing:.5px}
+.mi-arrow{font-size:11px;flex-shrink:0}
+.mi-desc{font-family:var(--sans);font-size:10px;color:var(--text);flex:1;line-height:1.3}
+
+/* ── FACTOR RIESGO ── */
+.risk-box{background:var(--bg4);border:1px solid var(--border2);border-left:2px solid var(--red);border-radius:2px;padding:8px 11px;margin-top:8px}
+.risk-lbl{font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:2px;margin-bottom:4px}
+.risk-txt{font-family:var(--sans);font-size:11px;color:#c8b870;line-height:1.5}
+
+/* ── WATCH BOX ── */
+.watch-box{background:rgba(212,175,55,.05);border:1px solid rgba(212,175,55,.2);border-left:2px solid var(--gold);border-radius:2px;padding:8px 11px;margin-top:6px}
+.watch-lbl{font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:2px;margin-bottom:4px}
+.watch-txt{font-family:var(--sans);font-size:11px;color:var(--text);line-height:1.5}
+
+/* ── RR & RANGE in entry ── */
+.entry-extra{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.ee-box{background:var(--bg4);border-radius:2px;padding:7px 10px;border:1px solid var(--border)}
+.ee-lbl{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:1.5px;margin-bottom:3px}
+.ee-val{font-family:var(--mono);font-size:13px;font-weight:600}
+.rr-good{color:var(--green)}.rr-ok{color:var(--gold)}.rr-bad{color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spin"></div>
+  <img src="logo.png" alt="Pegasus">
+  <div class="ls">MARKET INTELLIGENCE</div>
+  <div class="ls" id="ls-sub" style="margin-top:6px">CONECTANDO CON EL SERVIDOR...</div>
+  <div class="lh" id="ls-hint">Asegúrate de que backend.py está corriendo en http://localhost:5050</div>
+  <button id="rbt" onclick="loadData()">↻ REINTENTAR</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand-row">
+      <img src="logo.png" alt="Pegasus" class="brand-logo">
+      <div>
+        <div class="brand-name">PEGASUS TRADING TOOLS</div>
+        <div class="brand-sub">MARKET INTELLIGENCE</div>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="live-dot" id="sdot"></div>
+      <span id="status-lbl">INICIANDO</span>
+      <span id="clk" class="clk">--:--:-- ET</span>
+      <span id="next-upd"></span>
+      <button class="ref-btn" onclick="loadData()">↻ ACTUALIZAR</button>
+    </div>
+  </div>
+
+  <!-- MAIN TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('intraday',this)">Intraday</div>
+    <div class="tab" onclick="showTab('swing',this)">Swing 3–10d</div>
+    <div class="tab" onclick="showTab('macro',this)">Macro</div>
+    <div class="tab" onclick="showTab('alertas',this)">Alertas</div>
+  </div>
+
+  <!-- ═══ INTRADAY ═══ -->
+  <div id="tab-intraday" class="body">
+    <div class="brief">
+      <div class="brief-lbl">BRIEFING DEL DÍA</div>
+      <div class="brief-txt" id="briefing-txt">Cargando...</div>
+    </div>
+    <div class="macro-strip" id="macro-strip">
+      <div class="mc"><div class="mc-lbl">VIX</div><div class="mc-val neu" id="ms-vix">—</div><div class="mc-sub" id="ms-vix-s">—</div></div>
+      <div class="mc"><div class="mc-lbl">DXY</div><div class="mc-val" id="ms-dxy">—</div><div class="mc-sub" id="ms-dxy-s">—</div></div>
+      <div class="mc"><div class="mc-lbl">US10Y</div><div class="mc-val" id="ms-10y">—</div><div class="mc-sub" id="ms-10y-s">—</div></div>
+      <div class="mc"><div class="mc-lbl">SESIÓN</div><div class="mc-val gold" id="ms-ses">—</div><div class="mc-sub neu" id="ms-ses-s">—</div></div>
+    </div>
+    <div class="asset-tabs" id="asset-tabs"></div>
+    <div class="detail" id="detail-panel">
+      <div class="detail-loading">SELECCIONA UN ACTIVO PARA VER EL ANÁLISIS COMPLETO</div>
+    </div>
+  </div>
+
+  <!-- ═══ SWING ═══ -->
+  <div id="tab-swing" class="body" style="display:none">
+    <div class="brief">
+      <div class="brief-lbl">ANÁLISIS SWING — 3 A 10 DÍAS</div>
+      <div class="brief-txt" id="swing-brief-txt">Cargando...</div>
+    </div>
+    <div class="swing-grid" id="swing-grid"></div>
+    <div class="detail">
+      <div style="padding:11px 15px;border-bottom:1px solid var(--border)">
+        <div class="sec-hdr" style="border:none;padding:0;margin:0">POSICIONAMIENTO INSTITUCIONAL (DERIVADO DEL MODELO)</div>
+      </div>
+      <div style="padding:11px 15px">
+        <div class="var-list" id="cot-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MACRO ═══ -->
+  <div id="tab-macro" class="body" style="display:none">
+    <div class="brief">
+      <div class="brief-lbl">CONTEXTO MACRO EN VIVO</div>
+      <div class="brief-txt" id="macro-brief-txt">Cargando indicadores macro en tiempo real...</div>
+    </div>
+    <div class="macro-full-grid" id="macro-full"></div>
+    <div class="detail">
+      <div style="padding:11px 15px;border-bottom:1px solid var(--border)">
+        <div class="sec-hdr" style="border:none;padding:0;margin:0">CORRELACIONES CLAVE DEL MODELO</div>
+      </div>
+      <div style="padding:11px 15px">
+        <div class="var-list" id="corr-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALERTAS ═══ -->
+  <div id="tab-alertas" class="body" style="display:none">
+    <div class="brief">
+      <div class="brief-lbl">SEÑALES EN TIEMPO REAL</div>
+      <div class="brief-txt">El sistema detecta cambios de señal automáticamente cada 15 minutos. <b>No necesitas estar mirando la pantalla.</b></div>
+    </div>
+    <div id="alerts-list"></div>
+  </div>
+
+  <div class="footer">
+    <span>PEGASUS TRADING TOOLS · MARKET INTELLIGENCE</span>
+    <span id="last-upd-foot">—</span>
+    <span>Análisis educativo. No constituye recomendación de inversión.</span>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script>
+// En file:// usa localhost; cuando Flask sirve el dashboard usa URLs relativas
+const API = location.protocol === 'file:' ? 'http://localhost:5050' : '';
+const ORDER = ['gold','oil','nq','spy','dow','dxy'];
+let cachedData = null;
+let selAsset = 'gold';
+let retryTimer = null;
+let cdownTimer = null;
+let nextAt = null;
+
+// ── LOAD ──────────────────────────────────────────────────────
+async function loadData() {
+  clearTimeout(retryTimer);
+  try {
+    const r = await fetch(API + '/api/data', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (data.status === 'INICIANDO') {
+      setLoading('PROCESANDO DATOS DE MERCADO...', 'Calculando indicadores para 6 activos. Un momento...');
+      retryTimer = setTimeout(loadData, 6000);
+      return;
+    }
+    cachedData = data;
+    renderAll(data);
+    nextAt = Date.now() + 15 * 60 * 1000;
+    startCdown();
+    retryTimer = setTimeout(loadData, 15 * 60 * 1000);
+  } catch(e) {
+    setLoading('SIN CONEXIÓN CON EL BACKEND', 'Asegúrate de que backend.py está corriendo en http://localhost:5050', true);
+    retryTimer = setTimeout(loadData, 8000);
+  }
+}
+
+function setLoading(sub, hint, showBtn = false) {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('ls-sub').textContent = sub;
+  document.getElementById('ls-hint').textContent = hint;
+  document.getElementById('rbt').style.display = showBtn ? 'block' : 'none';
+}
+
+function startCdown() {
+  clearInterval(cdownTimer);
+  cdownTimer = setInterval(() => {
+    if (!nextAt) return;
+    const s = Math.max(0, Math.round((nextAt - Date.now()) / 1000));
+    const m = Math.floor(s / 60);
+    document.getElementById('next-upd').textContent = s > 0 ? `PRÓX ${m}:${String(s%60).padStart(2,'0')}` : '';
+  }, 1000);
+}
+
+// ── RENDER ALL ─────────────────────────────────────────────────
+function renderAll(data) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+
+  // Status dot
+  const dot = document.getElementById('sdot');
+  dot.className = 'live-dot ' + (data.status || '').toLowerCase();
+  document.getElementById('status-lbl').textContent = data.status || '—';
+
+  // Last update footer
+  if (data.last_update) {
+    const d = new Date(data.last_update);
+    const s = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-upd-foot').textContent = 'UPD ' + s;
+  }
+
+  renderMacroStrip(data.macro || {});
+  renderBriefing(data.briefing || '');
+  buildAssetTabs(data.assets || {});
+  renderDetail(selAsset, data.assets || {});
+  renderSwing(data.assets || {});
+  renderMacroTab(data.macro || {});
+  renderAlerts(data);
+}
+
+// ── MACRO STRIP ───────────────────────────────────────────────
+function renderMacroStrip(macro) {
+  const vix = macro.VIX || {};
+  const dxy = macro.DXY || {};
+  const us10 = macro.US10Y || {};
+
+  const vixEl = document.getElementById('ms-vix');
+  const vixV = vix.value || 0;
+  vixEl.textContent = Number(vixV).toFixed(1);
+  vixEl.className = 'mc-val ' + (vixV > 20 ? 'dn' : vixV < 15 ? 'up' : 'neu');
+  document.getElementById('ms-vix-s').textContent = vixV > 20 ? 'VOLATILIDAD ALTA' : vixV < 15 ? 'CALMA' : 'MODERADO';
+
+  const dxyEl = document.getElementById('ms-dxy');
+  dxyEl.textContent = Number(dxy.value || 0).toFixed(2);
+  const dxyChg = dxy.chg_pct || 0;
+  dxyEl.className = 'mc-val ' + (dxyChg > 0.1 ? 'up' : dxyChg < -0.1 ? 'dn' : 'neu');
+  document.getElementById('ms-dxy-s').textContent = (dxyChg > 0 ? '▲ +' : '▼ ') + dxyChg.toFixed(2) + '%';
+  document.getElementById('ms-dxy-s').className = 'mc-sub ' + (dxyChg > 0.1 ? 'up' : dxyChg < -0.1 ? 'dn' : 'neu');
+
+  const us10El = document.getElementById('ms-10y');
+  us10El.textContent = Number(us10.value || 0).toFixed(2) + '%';
+  const us10Chg = us10.chg_pct || 0;
+  us10El.className = 'mc-val ' + (us10Chg > 0.05 ? 'dn' : us10Chg < -0.05 ? 'up' : 'neu');
+  document.getElementById('ms-10y-s').textContent = (us10Chg > 0 ? '▲ +' : '▼ ') + us10Chg.toFixed(2) + '%';
+
+  // Session (ET timezone)
+  const now = new Date();
+  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const h = et.getHours(), mn = et.getMinutes();
+  const total = h * 60 + mn;
+  let ses = 'AFTER HOURS', sesInfo = 'Cerrado';
+  if (total >= 570 && total < 930) { ses = 'NY'; sesInfo = '09:30 – 16:00'; }
+  else if (total >= 540 && total < 570) { ses = 'PRE-MKT'; sesInfo = 'Pre-apertura'; }
+  else if (total >= 240 && total < 540) { ses = 'EUROPA'; sesInfo = 'Sesión activa'; }
+  else if (total < 240 || total >= 930) { ses = 'ASIA'; sesInfo = total >= 930 ? 'Cierre NY' : 'Activa'; }
+  document.getElementById('ms-ses').textContent = ses;
+  document.getElementById('ms-ses-s').textContent = sesInfo;
+}
+
+// ── BRIEFING ──────────────────────────────────────────────────
+function renderBriefing(txt) {
+  const el = document.getElementById('briefing-txt');
+  if (!txt) { el.textContent = 'Análisis del mercado no disponible. Configura tu API key de Anthropic.'; return; }
+  // Bold key words
+  el.innerHTML = esc(txt)
+    .replace(/(ALCISTA FUERTE|ALCISTA|BAJISTA FUERTE|BAJISTA|NEUTRAL)/g, '<b>$1</b>')
+    .replace(/(LARGO|CORTO|LONG|SHORT)/g, '<b>$1</b>');
+}
+
+// ── ASSET TABS ────────────────────────────────────────────────
+function buildAssetTabs(assets) {
+  const wrap = document.getElementById('asset-tabs');
+  wrap.innerHTML = ORDER.map(id => {
+    const a = assets[id];
+    if (!a) return '';
+    const isUp = isAlcista(a.signal);
+    const isDn = isBajista(a.signal);
+    const tabCls = selAsset === id
+      ? 'atab active ' + (isUp ? 'sig-up' : isDn ? 'sig-dn' : '')
+      : 'atab';
+    const arrow = a.dir === 'up' ? '▲' : '▼';
+    const arrowCls = a.dir === 'up' ? 'up' : 'dn';
+    return `<div class="${tabCls}" onclick="selectAsset('${id}')">
+      ${esc(a.name)} <span class="${arrowCls}" style="font-size:8px">${arrow}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectAsset(id) {
+  selAsset = id;
+  if (!cachedData) return;
+  buildAssetTabs(cachedData.assets || {});
+  renderDetail(id, cachedData.assets || {});
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────
+function renderDetail(id, assets) {
+  const a = assets[id];
+  const panel = document.getElementById('detail-panel');
+  if (!a) { panel.innerHTML = '<div class="detail-loading">ACTIVO NO DISPONIBLE</div>'; return; }
+
+  const macro = (cachedData || {}).macro || {};
+  const sigCls = sigBadgeClass(a.signal);
+  const chgCls = a.dir === 'up' ? 'up' : 'dn';
+  const sc = a.score || 0;
+  const scorePct = Math.max(2, Math.min(98, (sc + 100) / 2));
+  const scoreColor = sc > 25 ? 'var(--green)' : sc < -25 ? 'var(--red)' : 'var(--neu)';
+  const en = a.entry || {};
+  const pr = a.projection || {};
+  const bull = a.sentiment?.bull ?? 50;
+  const bear = a.sentiment?.bear ?? 50;
+  const tipo = en.tipo || 'ESPERAR';
+  const tipoColor = tipo === 'LONG' ? 'var(--green)' : tipo === 'SHORT' ? 'var(--red)' : 'var(--neu)';
+  const entryCardCls = tipo === 'LONG' ? 'entry-card entry-main' : tipo === 'SHORT' ? 'entry-card stop-main' : 'entry-card wait-main';
+
+  // ── Resumen ejecutivo ──
+  const absScore = Math.abs(sc);
+  const hasSetup = tipo !== 'ESPERAR' && absScore > 20;
+  const setupBadge = hasSetup
+    ? `<span class="badge-setup-si">SÍ</span>`
+    : absScore > 10
+      ? `<span class="badge-setup-wait">VIGILAR</span>`
+      : `<span class="badge-setup-no">NO</span>`;
+
+  const grade = absScore > 60 ? 'A' : absScore > 35 ? 'B' : absScore > 20 ? 'C' : '—';
+  const gradeCls = grade === 'A' ? 'grade-A' : grade === 'B' ? 'grade-B' : grade === 'C' ? 'grade-C' : 'grade-X';
+  const gradeDesc = grade === 'A' ? 'Convicción alta' : grade === 'B' ? 'Convicción media' : grade === 'C' ? 'Convicción baja' : 'Sin setup claro';
+
+  // R/R calculation
+  const entryMid = parseMid(en.zona);
+  const stopVal  = parseNum(en.stop);
+  const tp1Val   = parseNum(en.tp1);
+  const tp2Val   = parseNum(en.tp2);
+  let rrHtml = '<span class="grade-X">—</span>';
+  let rrHtml2 = '';
+  if (entryMid && stopVal && tp1Val) {
+    const risk = Math.abs(entryMid - stopVal);
+    const rw1  = Math.abs(tp1Val - entryMid);
+    const rw2  = tp2Val ? Math.abs(tp2Val - entryMid) : 0;
+    if (risk > 0) {
+      const rr1 = (rw1 / risk).toFixed(1);
+      const rr2 = rw2 ? (rw2 / risk).toFixed(1) : null;
+      const rrCls = rr1 >= 2 ? 'rr-good' : rr1 >= 1.5 ? 'rr-ok' : 'rr-bad';
+      rrHtml = `<span class="${rrCls}">1 : ${rr1}</span>`;
+      if (rr2) rrHtml2 = `<div class="res-sub">TP2: 1 : ${rr2}</div>`;
+    }
+  }
+
+  // ATR → daily range
+  const atrVar = (a.vars || []).find(v => v.n === 'ATR');
+  const atr = atrVar ? parseFloat(atrVar.v) : null;
+  const priceRaw = parseFloat((a.price || '0').replace(/,/g, ''));
+  let rangeHtml = '<span class="grade-X">—</span>';
+  let rangeDesc = '';
+  if (atr && priceRaw) {
+    const hi = fmtPx(priceRaw + atr);
+    const lo = fmtPx(priceRaw - atr);
+    rangeHtml = `<span class="gold" style="font-size:11px">${lo} – ${hi}</span>`;
+    rangeDesc = `ATR = ${atrVar.v}`;
+  }
+
+  // Vars
+  const varsHtml = (a.vars || []).map(v => {
+    const cls = v.c === 'up' ? 'up' : v.c === 'dn' ? 'dn' : 'neu';
+    return `<div class="var-row"><span class="var-n">${esc(v.n)}</span><span class="var-v ${cls}">${esc(v.v)}</span></div>`;
+  }).join('');
+
+  // Macro impact per asset
+  const macroImpact = getMacroImpact(id, macro);
+
+  // Factor de riesgo (invalidation)
+  const riskFactor = getRiskFactor(id, macro);
+
+  // Qué monitorear hoy
+  const watchToday = getWatchToday(id, macro);
+
+  // Headlines
+  const hls = a.headlines || [];
+  const hlsHtml = hls.length
+    ? hls.map(h => {
+        const hlCls = h.direction === 'up' ? 'hl-up' : h.direction === 'dn' ? 'hl-dn' : 'hl-neu';
+        return `<div class="hl ${hlCls}">${esc(h.title || '')}${h.source ? `<div class="hl-src">${esc(h.source)}</div>` : ''}</div>`;
+      }).join('')
+    : '<div class="hl-empty">SIN NOTICIAS DISPONIBLES — Activa tu API key para análisis de sentimiento en tiempo real</div>';
+
+  panel.innerHTML = `
+    <!-- Header -->
+    <div class="detail-header">
+      <div>
+        <div class="detail-name">${esc(a.name || id)}</div>
+        <div class="detail-ticker">${esc(a.ticker || '')}</div>
+      </div>
+      <div class="detail-price">
+        <div class="d-price">${esc(a.price || '—')}</div>
+        <div class="d-chg ${chgCls}">${esc(a.chg || '—')} HOY</div>
+      </div>
+    </div>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <div class="resumen">
+      <div class="res-cell">
+        <div class="res-lbl">¿HAY SETUP?</div>
+        <div class="res-val">${setupBadge}</div>
+        <div class="res-sub">${esc(tipo)}</div>
+      </div>
+      <div class="res-cell">
+        <div class="res-lbl">CALIDAD</div>
+        <div class="res-val ${gradeCls}">${grade}</div>
+        <div class="res-sub">${gradeDesc}</div>
+      </div>
+      <div class="res-cell">
+        <div class="res-lbl">SCORE</div>
+        <div class="res-val" style="color:${scoreColor}">${sc > 0 ? '+' : ''}${sc}</div>
+        <div class="res-sub">de 100 pts</div>
+      </div>
+      <div class="res-cell">
+        <div class="res-lbl">R / R (TP1)</div>
+        <div class="res-val">${rrHtml}</div>
+        ${rrHtml2}
+      </div>
+      <div class="res-cell">
+        <div class="res-lbl">RANGO HOY</div>
+        <div class="res-val" style="font-size:11px;line-height:1.4">${rangeHtml}</div>
+        <div class="res-sub">${rangeDesc}</div>
+      </div>
+    </div>
+
+    <!-- Signal + Reason -->
+    <div class="signal-hero">
+      <div style="flex-shrink:0">
+        <div class="sig-badge ${sigCls}">▶ ${esc(a.signal || '—')}</div>
+        <div class="score-row" style="margin-top:10px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--gold-dim)">-100</span>
+          <div class="score-trk"><div class="score-pin" style="left:${scorePct}%"></div></div>
+          <span class="score-num" style="color:${scoreColor}">${sc > 0 ? '+' : ''}${sc}</span>
+        </div>
+      </div>
+      <div class="sig-reason">${esc(a.reason || 'Activa tu API key de Anthropic para recibir el análisis narrativo completo en español: por qué el modelo da esta señal, qué factores pesan más, y qué esperar las próximas horas.')}</div>
+    </div>
+
+    <!-- 2-col grid -->
+    <div class="detail-grid">
+      <div class="detail-col">
+        <div class="sec-hdr">GRÁFICA 30 DÍAS</div>
+        <div class="chart-area"><canvas id="spark-${id}"></canvas></div>
+
+        <div class="sec-hdr">VARIABLES DEL MODELO</div>
+        <div class="var-list">${varsHtml}</div>
+
+        <div class="sec-hdr" style="margin-top:12px">IMPACTO MACRO HOY</div>
+        <div class="macro-impact">${macroImpact}</div>
+      </div>
+      <div class="detail-col">
+        <div class="sec-hdr">SENTIMIENTO DEL MERCADO</div>
+        <div class="sent-wrap">
+          <div class="sent-bar-row">
+            <span class="sent-pct up">${bull}%</span>
+            <div class="sent-bar-bg">
+              <div class="sent-bull-fill" style="width:${bull}%"></div>
+              <div class="sent-bear-fill" style="width:${bear}%"></div>
+            </div>
+            <span class="sent-pct dn">${bear}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="font-family:var(--mono);font-size:8px;color:var(--green)">ALCISTA</span>
+            <span style="font-family:var(--mono);font-size:8px;color:var(--red)">BAJISTA</span>
+          </div>
+        </div>
+
+        <div class="sec-hdr">TITULARES RECIENTES</div>
+        <div class="headlines">${hlsHtml}</div>
+
+        <div class="sec-hdr">PROYECCIÓN 1–3 MESES</div>
+        <div class="proj-grid">
+          <div class="pj opt">
+            <div class="pj-lbl">OPTIMISTA</div>
+            <div class="pj-val">${esc(pr.opt?.valor || '—')}</div>
+            <div class="pj-sub">${esc(pr.opt?.factor || '')}</div>
+          </div>
+          <div class="pj base">
+            <div class="pj-lbl">BASE</div>
+            <div class="pj-val">${esc(pr.base?.valor || '—')}</div>
+            <div class="pj-sub">${esc(pr.base?.factor || '')}</div>
+          </div>
+          <div class="pj pes">
+            <div class="pj-lbl">PESIMISTA</div>
+            <div class="pj-val">${esc(pr.pes?.valor || '—')}</div>
+            <div class="pj-sub">${esc(pr.pes?.factor || '')}</div>
+          </div>
+        </div>
+
+        <div class="watch-box">
+          <div class="watch-lbl">QUÉ MONITOREAR HOY</div>
+          <div class="watch-txt">${watchToday}</div>
+        </div>
+
+        <div class="risk-box">
+          <div class="risk-lbl">QUÉ INVALIDARÍA ESTE ANÁLISIS</div>
+          <div class="risk-txt">${riskFactor}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entry zones -->
+    <div class="entry-box">
+      <div class="sec-hdr">ZONAS DE OPERACIÓN — ${esc(tipo)}</div>
+      <div class="entry-grid">
+        <div class="${entryCardCls}">
+          <div class="ec-lbl">ZONA DE ENTRADA</div>
+          <div class="ec-val" style="color:${tipoColor}">${esc(en.zona || '—')}</div>
+          <div class="ec-sub">${esc(tipo)} · Espera confirmación</div>
+        </div>
+        <div class="entry-card stop-main">
+          <div class="ec-lbl">STOP LOSS OBLIGATORIO</div>
+          <div class="ec-val dn">${esc(en.stop || '—')}</div>
+          <div class="ec-sub">Si rompe esto → salir</div>
+        </div>
+        <div class="entry-card tp-main">
+          <div class="ec-lbl">OBJETIVOS</div>
+          <div class="ec-val gold">${esc(en.tp1 || '—')}</div>
+          <div class="ec-sub">TP2: ${esc(en.tp2 || '—')}</div>
+        </div>
+      </div>
+      <div class="entry-extra">
+        <div class="ee-box">
+          <div class="ee-lbl">RIESGO / BENEFICIO (TP1)</div>
+          <div class="ee-val">${rrHtml} <span style="font-size:9px;color:var(--gold-dim)">— ${rr1Desc(entryMid, stopVal, tp1Val)}</span></div>
+        </div>
+        <div class="ee-box">
+          <div class="ee-lbl">RIESGO MÁXIMO (STOP)</div>
+          <div class="ee-val dn">${esc(en.risk || '—')}</div>
+        </div>
+      </div>
+      <div class="disclaimer" style="margin-top:7px">
+        <span>DISCLAIMER: Zonas referenciales con fines educativos. No son recomendación de inversión. Opere siempre con su propio criterio y gestión de riesgo.</span>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const cv = document.getElementById('spark-' + id);
+    if (cv && a.prices_30 && a.prices_30.length > 1) drawSpark(cv, a.prices_30, a.dir, 110);
+  }, 30);
+}
+
+// ── SWING TAB ─────────────────────────────────────────────────
+function renderSwing(assets) {
+  const swingSignal = (sig, score) => {
+    if (sig === 'ALCISTA FUERTE') return { lbl: 'LARGO FUERTE', c: 'up', h: '5–10 días' };
+    if (sig === 'ALCISTA')        return { lbl: 'LARGO',        c: 'up', h: '5–8 días' };
+    if (sig === 'BAJISTA')        return { lbl: 'CORTO',        c: 'dn', h: '3–7 días' };
+    if (sig === 'BAJISTA FUERTE') return { lbl: 'CORTO FUERTE', c: 'dn', h: '5–10 días' };
+    return { lbl: 'LATERAL', c: 'neu', h: '3–5 días' };
+  };
+
+  document.getElementById('swing-grid').innerHTML = ORDER.map(id => {
+    const a = assets[id];
+    if (!a) return '';
+    const sw = swingSignal(a.signal, a.score);
+    return `<div class="sw-card">
+      <div class="sw-asset">${esc(a.name)}</div>
+      <div class="sw-sig ${sw.c}">${sw.lbl}</div>
+      <div class="sw-score">Score ${a.score > 0 ? '+' : ''}${a.score || 0} / 100</div>
+      <div class="sw-horizon">Horizonte: ${sw.h}</div>
+    </div>`;
+  }).join('');
+
+  // COT derived
+  document.getElementById('cot-list').innerHTML = ORDER.map(id => {
+    const a = assets[id];
+    if (!a) return '';
+    const sc = a.score || 0;
+    let pos, posC;
+    if (sc > 50) { pos = 'ACUMULACIÓN LARGA'; posC = 'up'; }
+    else if (sc > 20) { pos = 'LARGO MODERADO'; posC = 'up'; }
+    else if (sc < -50) { pos = 'DISTRIBUCIÓN CORTA'; posC = 'dn'; }
+    else if (sc < -20) { pos = 'CORTO MODERADO'; posC = 'dn'; }
+    else { pos = 'POSICIÓN NEUTRAL'; posC = 'neu'; }
+    return `<div class="var-row">
+      <span class="var-n">${esc(a.name)}</span>
+      <span class="var-v ${posC}">${pos}</span>
+    </div>`;
+  }).join('');
+
+  // Swing brief
+  const alcistas = ORDER.filter(id => assets[id] && isAlcista(assets[id].signal)).map(id => assets[id].name);
+  const bajistas = ORDER.filter(id => assets[id] && isBajista(assets[id].signal)).map(id => assets[id].name);
+  let brief = '';
+  if (alcistas.length) brief += `Activos con sesgo <b>alcista</b> en swing: ${alcistas.join(', ')}. `;
+  if (bajistas.length) brief += `Activos con sesgo <b>bajista</b>: ${bajistas.join(', ')}. `;
+  if (!alcistas.length && !bajistas.length) brief = 'Mercado en modo <b>lateral</b>. Sin setups claros de swing en este momento.';
+  document.getElementById('swing-brief-txt').innerHTML = brief + 'Análisis basado en score técnico y macro del modelo.';
+}
+
+// ── MACRO TAB ─────────────────────────────────────────────────
+function renderMacroTab(macro) {
+  const ITEMS = [
+    { k: 'VIX',   l: 'VIX',   dec: 1, sfx: '',  tip: v => v > 20 ? 'red' : v < 15 ? 'green' : 'gold' },
+    { k: 'DXY',   l: 'DXY',   dec: 2, sfx: '',  tip: v => 'gold' },
+    { k: 'US10Y', l: 'US10Y', dec: 2, sfx: '%', tip: v => v > 4.5 ? 'red' : 'green' },
+    { k: 'US02Y', l: 'US02Y', dec: 2, sfx: '%', tip: v => v > 4.8 ? 'red' : 'gold' },
+    { k: 'GOLD',  l: 'ORO',   dec: 0, sfx: '',  tip: v => 'gold' },
+    { k: 'OIL',   l: 'PETRÓLEO', dec: 2, sfx: '', tip: v => 'gold' },
+  ];
+  document.getElementById('macro-full').innerHTML = ITEMS.map(it => {
+    const m = macro[it.k];
+    if (!m) return '';
+    const chg = m.chg_pct || 0;
+    const top = it.tip(m.value);
+    const valCls = chg > 0.05 ? 'up' : chg < -0.05 ? 'dn' : 'neu';
+    return `<div class="mf ${top}-top">
+      <div class="mf-lbl">${it.l}</div>
+      <div class="mf-val ${valCls}">${Number(m.value).toFixed(it.dec)}${it.sfx}</div>
+      <div class="mf-sub">${chg > 0 ? '▲ +' : '▼ '}${chg.toFixed(2)}%</div>
+    </div>`;
+  }).join('');
+
+  // Correlations
+  document.getElementById('corr-list').innerHTML = [
+    { n: 'ORO ↔ DXY',     v: 'Correlación inversa (-0.85)', c: 'dn' },
+    { n: 'NQ ↔ US10Y',   v: 'Correlación inversa (-0.78)', c: 'dn' },
+    { n: 'PETRÓLEO ↔ VIX',v: 'Correlación negativa (-0.6)', c: 'dn' },
+    { n: 'SPY ↔ VIX',    v: 'Correlación inversa (-0.82)', c: 'dn' },
+    { n: 'DXY ↔ US10Y',  v: 'Correlación positiva (+0.71)', c: 'up' },
+  ].map(r => `<div class="var-row"><span class="var-n">${r.n}</span><span class="var-v ${r.c}">${r.v}</span></div>`).join('');
+
+  // Macro brief
+  const vix = macro.VIX?.value || 0;
+  const dxy = macro.DXY?.value || 0;
+  const us10 = macro.US10Y?.value || 0;
+  document.getElementById('macro-brief-txt').innerHTML =
+    `VIX en <b>${vix.toFixed(1)}</b> — ${vix > 20 ? 'régimen de <b>volatilidad alta</b>, presión sobre equity' : vix < 15 ? 'mercado en <b>calma</b>, condiciones favorables' : 'volatilidad <b>moderada</b>'}. DXY en <b>${dxy.toFixed(2)}</b> ${macro.DXY?.chg_pct > 0 ? '(fortaleza del dólar presiona commodities y oro)' : '(debilidad del dólar favorece al oro y petróleo)'}. US10Y en <b>${us10.toFixed(2)}%</b> ${us10 > 4.5 ? '— yields altos comprimen múltiplos de equity' : '— yields favorables para renta variable'}.`;
+}
+
+// ── ALERTS TAB ────────────────────────────────────────────────
+function renderAlerts(data) {
+  const assets = data.assets || {};
+  const upd = data.last_update ? new Date(data.last_update).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+  const items = [];
+
+  ORDER.forEach(id => {
+    const a = assets[id];
+    if (!a) return;
+    const sc = a.score || 0;
+    const col = isAlcista(a.signal) ? 'var(--green)' : isBajista(a.signal) ? 'var(--red)' : 'var(--neu)';
+    items.push({ time: upd, txt: `${a.name}: ${a.signal} (Score ${sc > 0 ? '+' : ''}${sc}) — Precio ${a.price} ${a.chg}`, col });
+  });
+
+  if (data.briefing && !data.briefing.includes('fallback') && !data.briefing.includes('API key')) {
+    items.unshift({ time: upd, txt: 'Briefing del día generado por IA — ' + data.briefing.substring(0, 100) + '...', col: 'var(--gold)' });
+  }
+
+  document.getElementById('alerts-list').innerHTML = items.length
+    ? items.map(a => `<div class="alert-item">
+        <div class="al-dot" style="background:${a.col}"></div>
+        <div class="al-body"><div class="al-txt">${esc(a.txt)}</div><div class="al-meta">Pegasus Market Intelligence</div></div>
+        <div class="al-time">${a.time} ET</div>
+      </div>`).join('')
+    : '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--gold-ghost)">SIN ALERTAS DISPONIBLES</div>';
+}
+
+// ── SPARKLINE ─────────────────────────────────────────────────
+function drawSpark(canvas, prices, dir, H = 110) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const mn = Math.min(...prices), mx = Math.max(...prices), rng = mx - mn || 1;
+  const pad = 6, w = W - pad * 2, h = H - pad * 2;
+  const xi = i => pad + (i / (prices.length - 1)) * w;
+  const yi = v => pad + h - ((v - mn) / rng) * h;
+
+  const isUp = dir === 'up';
+  const col  = isUp ? '#00C97A' : '#FF4455';
+  const colA = isUp ? 'rgba(0,201,122,' : 'rgba(255,68,85,';
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(xi(0), yi(prices[0]));
+  prices.forEach((v, i) => { if (i) ctx.lineTo(xi(i), yi(v)); });
+  ctx.lineTo(xi(prices.length - 1), H);
+  ctx.lineTo(xi(0), H);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, colA + '.18)');
+  g.addColorStop(1, colA + '0)');
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(xi(0), yi(prices[0]));
+  prices.forEach((v, i) => { if (i) ctx.lineTo(xi(i), yi(v)); });
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Last price dot with glow ring
+  const lx = xi(prices.length - 1), ly = yi(prices[prices.length - 1]);
+  ctx.beginPath(); ctx.arc(lx, ly, 4, 0, 2 * Math.PI);
+  ctx.fillStyle = col; ctx.fill();
+  ctx.beginPath(); ctx.arc(lx, ly, 7, 0, 2 * Math.PI);
+  ctx.strokeStyle = colA + '.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+  // Price labels
+  ctx.font = '10px IBM Plex Mono, monospace';
+  ctx.fillStyle = '#7a6a3a';
+  ctx.fillText(fmtN(mx), pad + 2, pad + 10);
+  ctx.fillText(fmtN(mn), pad + 2, H - pad - 2);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function isAlcista(sig) { return sig === 'ALCISTA' || sig === 'ALCISTA FUERTE'; }
+function isBajista(sig) { return sig === 'BAJISTA' || sig === 'BAJISTA FUERTE'; }
+
+function sigBadgeClass(sig) {
+  if (sig === 'ALCISTA FUERTE') return 'sig-bull-strong';
+  if (sig === 'ALCISTA')        return 'sig-bull';
+  if (sig === 'BAJISTA FUERTE') return 'sig-bear';
+  if (sig === 'BAJISTA')        return 'sig-bear';
+  return 'sig-neu';
+}
+
+function fmtN(n) {
+  if (n > 1000) return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  return n.toFixed(2);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── PARSE HELPERS ─────────────────────────────────────────────
+function parseMid(str) {
+  if (!str) return null;
+  const clean = String(str).replace(/[$,\s]/g, '');
+  const m = clean.match(/^([\d.]+)[–—\-]([\d.]+)$/);
+  if (m) {
+    const a = parseFloat(m[1]), b = parseFloat(m[2]);
+    if (!isNaN(a) && !isNaN(b)) return (a + b) / 2;
+  }
+  const n = parseFloat(clean);
+  return isNaN(n) ? null : n;
+}
+
+function parseNum(str) {
+  if (!str) return null;
+  const n = parseFloat(String(str).replace(/[$,%\s,]/g, ''));
+  return isNaN(n) ? null : n;
+}
+
+function fmtPx(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (n >= 10000) return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (n >= 100)   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toFixed(2);
+}
+
+function rr1Desc(entryMid, stopVal, tp1Val) {
+  if (!entryMid || !stopVal || !tp1Val) return '';
+  const risk   = Math.abs(entryMid - stopVal);
+  if (risk === 0) return '';
+  const reward = Math.abs(tp1Val - entryMid);
+  const rr = reward / risk;
+  if (rr >= 2.0) return 'Excelente';
+  if (rr >= 1.5) return 'Aceptable';
+  if (rr >= 1.0) return 'Bajo — ajusta el stop';
+  return 'No operarse';
+}
+
+// ── MACRO IMPACT (per asset) ───────────────────────────────────
+function getMacroImpact(id, macro) {
+  const vix   = macro.VIX?.value   || 0;
+  const dxy   = macro.DXY?.value   || 0;
+  const dxyC  = macro.DXY?.chg_pct  || 0;
+  const us10  = macro.US10Y?.value  || 0;
+  const us10C = macro.US10Y?.chg_pct || 0;
+  const goldC = macro.GOLD?.chg_pct  || 0;
+
+  const G = 'var(--green)', R = 'var(--red)', N = 'var(--neu)';
+  const row = (indicator, arrow, col, desc) =>
+    `<div class="mi-row">
+      <span class="mi-indicator">${indicator}</span>
+      <span class="mi-arrow" style="color:${col}">${arrow}</span>
+      <span class="mi-desc">${desc}</span>
+    </div>`;
+
+  if (id === 'gold') {
+    const dc = dxyC > 0.2 ? R : dxyC < -0.2 ? G : N;
+    const da = dxyC > 0.2 ? '▼' : dxyC < -0.2 ? '▲' : '→';
+    const dd = dxyC > 0.2
+      ? `DXY +${dxyC.toFixed(2)}% — presión bajista sobre el oro (correlación inversa)`
+      : dxyC < -0.2
+        ? `DXY ${dxyC.toFixed(2)}% — impulso alcista para el oro`
+        : `DXY estable (${dxy.toFixed(2)}) — impacto neutral`;
+    const yc = us10C > 0.05 ? R : us10C < -0.05 ? G : N;
+    const ya = us10C > 0.05 ? '▼' : us10C < -0.05 ? '▲' : '→';
+    const yd = us10 > 4.5
+      ? `US10Y ${us10.toFixed(2)}% — yields elevados reducen atractivo del oro`
+      : `US10Y ${us10.toFixed(2)}% — nivel de yields favorece al oro`;
+    const vc = vix > 20 ? G : vix < 15 ? R : N;
+    const va = vix > 20 ? '▲' : vix < 15 ? '▼' : '→';
+    const vd = vix > 20
+      ? `VIX ${vix.toFixed(1)} — volatilidad alta activa demanda de refugio en oro`
+      : vix < 15
+        ? `VIX ${vix.toFixed(1)} — calma reduce prima de refugio del oro`
+        : `VIX ${vix.toFixed(1)} — volatilidad moderada, neutro`;
+    return row('DXY', da, dc, dd) + row('US10Y', ya, yc, yd) + row('VIX', va, vc, vd);
+  }
+
+  if (id === 'oil') {
+    const dc = dxyC > 0.2 ? R : dxyC < -0.2 ? G : N;
+    const da = dxyC > 0.2 ? '▼' : dxyC < -0.2 ? '▲' : '→';
+    const dd = dxyC > 0.2
+      ? `DXY +${dxyC.toFixed(2)}% — dólar fuerte encarece el crudo para compradores externos`
+      : `DXY ${dxyC.toFixed(2)}% — debilidad del USD apoya el precio del crudo`;
+    const vc = vix > 20 ? R : vix < 15 ? G : N;
+    const va = vix > 20 ? '▼' : vix < 15 ? '▲' : '→';
+    const vd = vix > 20
+      ? `VIX ${vix.toFixed(1)} — alta volatilidad señala riesgo recesivo y caída de demanda`
+      : `VIX ${vix.toFixed(1)} — calma favorece demanda energética global`;
+    const yc = us10 > 4.5 ? R : N;
+    const ya = us10 > 4.5 ? '▼' : '→';
+    const yd = us10 > 4.5
+      ? `US10Y ${us10.toFixed(2)}% — tasas altas frenan crecimiento y demanda de energía`
+      : `US10Y ${us10.toFixed(2)}% — nivel de tasas neutral para la demanda de crudo`;
+    return row('DXY', da, dc, dd) + row('VIX', va, vc, vd) + row('US10Y', ya, yc, yd);
+  }
+
+  if (id === 'nq') {
+    const yc = us10C > 0.05 ? R : us10C < -0.05 ? G : N;
+    const ya = us10C > 0.05 ? '▼' : us10C < -0.05 ? '▲' : '→';
+    const yd = us10 > 4.5
+      ? `US10Y ${us10.toFixed(2)}% — yields altos comprimen múltiplos del Nasdaq (tech growth)`
+      : `US10Y ${us10.toFixed(2)}% — yields favorables apoyan valuaciones tech`;
+    const vc = vix > 20 ? R : vix < 15 ? G : N;
+    const va = vix > 20 ? '▼' : vix < 15 ? '▲' : '→';
+    const vd = vix > 20
+      ? `VIX ${vix.toFixed(1)} — volatilidad alta genera rotación fuera de tecnología`
+      : `VIX ${vix.toFixed(1)} — calma favorece flujo hacia renta variable tech`;
+    const dc = dxyC > 0.3 ? R : dxyC < -0.3 ? G : N;
+    const da = dxyC > 0.3 ? '▼' : dxyC < -0.3 ? '▲' : '→';
+    const dd = `DXY ${dxy.toFixed(2)} — USD fuerte reduce earnings de exportadoras tech`;
+    return row('US10Y', ya, yc, yd) + row('VIX', va, vc, vd) + row('DXY', da, dc, dd);
+  }
+
+  if (id === 'spy') {
+    const vc = vix > 20 ? R : vix < 15 ? G : N;
+    const va = vix > 20 ? '▼' : vix < 15 ? '▲' : '→';
+    const vd = vix > 20
+      ? `VIX ${vix.toFixed(1)} — volatilidad alta presiona al S&P 500`
+      : `VIX ${vix.toFixed(1)} — condiciones de calma favorecen al índice`;
+    const yc = us10 > 5.0 ? R : us10 < 4.0 ? G : N;
+    const ya = us10 > 5.0 ? '▼' : us10 < 4.0 ? '▲' : '→';
+    const yd = us10 > 5.0
+      ? `US10Y ${us10.toFixed(2)}% — bonos compiten directamente con el equity en retorno`
+      : `US10Y ${us10.toFixed(2)}% — yields no compiten agresivamente con la bolsa`;
+    const dc = dxyC > 0.4 ? R : N;
+    const da = dxyC > 0.4 ? '▼' : '→';
+    const dd = `DXY ${dxy.toFixed(2)} — impacto en earnings de multinationales del S&P`;
+    return row('VIX', va, vc, vd) + row('US10Y', ya, yc, yd) + row('DXY', da, dc, dd);
+  }
+
+  if (id === 'dow') {
+    const vc = vix > 20 ? R : vix < 15 ? G : N;
+    const va = vix > 20 ? '▼' : vix < 15 ? '▲' : '→';
+    const vd = vix > 20
+      ? `VIX ${vix.toFixed(1)} — incertidumbre frena demanda de industriales del Dow`
+      : `VIX ${vix.toFixed(1)} — estabilidad favorece a industriales y sector valor`;
+    const yc = us10 > 4.8 ? R : N;
+    const ya = us10 > 4.8 ? '▼' : '→';
+    const yd = us10 > 4.8
+      ? `US10Y ${us10.toFixed(2)}% — yields altos elevan costos financieros del sector industrial`
+      : `US10Y ${us10.toFixed(2)}% — nivel de tasas manejable para el Dow`;
+    const dc = dxyC > 0.3 ? R : dxyC < -0.3 ? G : N;
+    const da = dxyC > 0.3 ? '▼' : dxyC < -0.3 ? '▲' : '→';
+    const dd = dxyC > 0.2
+      ? `DXY ${dxy.toFixed(2)} — USD fuerte reduce competitividad de exportaciones US`
+      : `DXY ${dxy.toFixed(2)} — dólar favorece márgenes del sector industrial`;
+    return row('VIX', va, vc, vd) + row('US10Y', ya, yc, yd) + row('DXY', da, dc, dd);
+  }
+
+  if (id === 'dxy') {
+    const yc = us10C > 0.05 ? G : us10C < -0.05 ? R : N;
+    const ya = us10C > 0.05 ? '▲' : us10C < -0.05 ? '▼' : '→';
+    const yd = us10C > 0
+      ? `US10Y ${us10.toFixed(2)}% (▲) — yields subiendo atraen capital hacia USD`
+      : `US10Y ${us10.toFixed(2)}% (▼) — yields bajando reducen demanda de dólares`;
+    const vc = vix > 25 ? G : N;
+    const va = vix > 25 ? '▲' : '→';
+    const vd = vix > 25
+      ? `VIX ${vix.toFixed(1)} — alta volatilidad activa demanda de USD como refugio`
+      : `VIX ${vix.toFixed(1)} — sin presión de refugio hacia el dólar actualmente`;
+    const gc = goldC > 0.5 ? R : goldC < -0.5 ? G : N;
+    const ga = goldC > 0.5 ? '▼' : goldC < -0.5 ? '▲' : '→';
+    const gd = `ORO ${goldC > 0 ? '+' : ''}${goldC.toFixed(2)}% — correlación inversa directa con el USD`;
+    return row('US10Y', ya, yc, yd) + row('VIX', va, vc, vd) + row('ORO', ga, gc, gd);
+  }
+
+  return '<div class="mi-row"><span class="mi-desc" style="color:var(--gold-dim)">Datos macro no disponibles</span></div>';
+}
+
+// ── INVALIDATION FACTORS (per asset) ──────────────────────────
+function getRiskFactor(id, macro) {
+  const dxy  = macro.DXY?.value   || 100;
+  const us10 = macro.US10Y?.value || 4.5;
+  const vix  = macro.VIX?.value   || 15;
+
+  const map = {
+    gold: `Cierre diario del DXY por encima de ${(dxy + 1.5).toFixed(2)} o el US10Y superando ${(us10 + 0.30).toFixed(2)}% invalidarían el sesgo. Un dato de empleo muy sólido que aleje los recortes de la Fed también pesaría.`,
+    oil:  `Anuncio sorpresa de aumento de producción OPEC, ISM manufacturero <48 (señal de contracción de demanda), o DXY rompiendo ${(dxy + 1.2).toFixed(2)} de forma sostenida son los factores clave de invalidación.`,
+    nq:   `US10Y por encima de ${Math.max(4.8, us10 + 0.25).toFixed(2)}% de forma sostenida o dato de inflación que descarte recortes de la Fed en el corto plazo. Vigilar earnings de las 7 magníficas como catalizador bidireccional.`,
+    spy:  `VIX cerrando por encima de 23 varios días consecutivos o US10Y superando ${Math.max(5.0, us10 + 0.30).toFixed(2)}% cambiarían el sesgo. Un dato de nóminas muy negativo también invalidaría el escenario base.`,
+    dow:  `VIX sostenido por encima de 22, PMI manufacturero decepcionante (<50) de forma consecutiva, o US10Y por encima de ${Math.max(5.0, us10 + 0.30).toFixed(2)}% presionarían al índice industrial. Vigilar indicadores de actividad real.`,
+    dxy:  `Declaraciones dovish de la Fed, datos débiles de empleo (NFP <150K) o inflación a la baja invalidarían el sesgo alcista del dólar. Un pivote de política monetaria sería la señal más fuerte de invalidación.`,
+  };
+
+  return map[id] || 'Monitorea cambios bruscos en VIX, DXY y US10Y como señales de invalidación del análisis actual.';
+}
+
+// ── WHAT TO WATCH TODAY (per asset) ───────────────────────────
+function getWatchToday(id, macro) {
+  const vix  = macro.VIX?.value  || 0;
+  const dxy  = macro.DXY?.value  || 100;
+  const us10 = macro.US10Y?.value || 4.5;
+  const goldPx = macro.GOLD?.value || 2000;
+
+  const map = {
+    gold: `Sigue el movimiento intraday del DXY — un rally por encima de ${(dxy + 0.8).toFixed(2)} indica presión. Atento a declaraciones de miembros de la Fed y resultado de subastas de Treasuries. Nivel pivote del oro hoy: zona ${Math.round(goldPx / 10) * 10} ± ATR.`,
+    oil:  `Si hoy es miércoles, atentos al reporte de inventarios EIA (14:30 ET) — moverá ±2% en minutos. Cualquier titular de OPEC o tensión geopolítica en Oriente Medio puede amplificar el movimiento. Monitorea también DXY.`,
+    nq:   `Sigue el US10Y en tiempo real: actualmente en ${us10.toFixed(2)}%. Si sube de ${(us10 + 0.10).toFixed(2)}%, espera ceder en el Nasdaq. Atentos a earnings tech del día y cualquier comentario de la Fed. VIX clave: ${vix.toFixed(1)}.`,
+    spy:  `VIX en ${vix.toFixed(1)} — si supera 20 intraday, reduce exposición o espera vuelta. Monitorea datos macro de apertura y declaraciones de la Fed. El S&P responde rápido a sorpresas de empleo o inflación.`,
+    dow:  `Indicadores de actividad industrial y consumo son drivers del Dow hoy. VIX actual: ${vix.toFixed(1)} — si se eleva, las industriales sufren primero. Atentos al sector bancario y cualquier dato de PMI o ventas minoristas.`,
+    dxy:  `Toda publicación económica US de hoy moverá el DXY. Sigue diferenciales de tasas con Euro y Yen. Si el US10Y sube, el DXY tiende a acompañar. Nivel pivote intraday: ${dxy.toFixed(2)} — soporte y resistencia de corto plazo.`,
+  };
+
+  return map[id] || 'Monitorea VIX, DXY y US10Y como drivers macro principales del día.';
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function showTab(id, el) {
+  ['intraday','swing','macro','alertas'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === id ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // Redraw sparkline if intraday tab selected
+  if (id === 'intraday' && cachedData) {
+    setTimeout(() => {
+      const a = (cachedData.assets || {})[selAsset];
+      const cv = document.getElementById('spark-' + selAsset);
+      if (cv && a?.prices_30?.length > 1) drawSpark(cv, a.prices_30, a.dir, 110);
+    }, 30);
+  }
+}
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function tick() {
+  const s = new Date().toLocaleTimeString('en-US', { hour12: false, timeZone: 'America/New_York' });
+  document.getElementById('clk').textContent = s + ' ET';
+}
+
+// ── RESIZE ────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (!cachedData) return;
+  const a = (cachedData.assets || {})[selAsset];
+  const cv = document.getElementById('spark-' + selAsset);
+  if (cv && a?.prices_30?.length > 1) drawSpark(cv, a.prices_30, a.dir, 110);
+});
+
+// ── START ─────────────────────────────────────────────────────
+loadData();
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

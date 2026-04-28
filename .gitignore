@@ -1,0 +1,9 @@
+backend.log
+*.zip
+Nuevo documento de texto.txt
+.claude/
+Conversaciones claude/
+Golden Pegasus Logo on Black Backdrop.png
+__pycache__/
+*.pyc
+.env
