@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pegasus Trading Tools — Market Intelligence para Traders</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080600;--bg2:#131109;--bg3:#1a1810;
+  --border:#2e2a18;--border2:#3a2e00;
+  --gold:#D4AF37;--gold2:#F0D060;--gold-dim:#7a6a3a;--gold-ghost:#4a3a10;
+  --green:#00C97A;--red:#FF4455;--neu:#7A9AB8;
+  --text:#e8ddb8;--text-dim:#9a8a5a;--text-bright:#f0e8c8;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--gold);text-decoration:none}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,6,0,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:12px 24px;display:flex;align-items:center;justify-content:space-between;
+}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo{width:36px;height:36px;object-fit:contain;border-radius:2px}
+.nav-name{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold);letter-spacing:3px}
+.nav-links{display:flex;align-items:center;gap:22px}
+.nav-links a{font-family:var(--mono);font-size:9px;color:var(--gold-dim);letter-spacing:2px;text-transform:uppercase;transition:color .15s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{
+  padding:7px 18px;background:var(--gold);color:#080600;
+  font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:2px;
+  border-radius:2px;border:none;cursor:pointer;transition:background .15s;text-transform:uppercase;
+}
+.nav-cta:hover{background:var(--gold2)}
+
+/* ── HERO ── */
+.hero{
+  min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:60px 24px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%, rgba(212,175,55,.07) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  font-family:var(--mono);font-size:9px;letter-spacing:4px;color:var(--gold);
+  text-transform:uppercase;margin-bottom:22px;
+  border:1px solid rgba(212,175,55,.2);padding:5px 16px;border-radius:2px;
+  background:rgba(212,175,55,.05);display:inline-block;
+}
+.hero h1{
+  font-family:var(--sans);font-size:clamp(32px,5vw,58px);font-weight:700;
+  color:var(--text-bright);line-height:1.15;max-width:820px;margin-bottom:22px;
+}
+.hero h1 span{color:var(--gold)}
+.hero-sub{
+  font-size:clamp(15px,2vw,18px);color:var(--text-dim);max-width:560px;
+  line-height:1.7;margin-bottom:38px;
+}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:52px}
+.btn-primary{
+  padding:14px 32px;background:var(--gold);color:#080600;
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:2px;
+  border-radius:2px;border:none;cursor:pointer;transition:all .15s;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-secondary{
+  padding:14px 32px;background:transparent;color:var(--gold);
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:2px;
+  border-radius:2px;border:1px solid rgba(212,175,55,.3);cursor:pointer;transition:all .15s;text-transform:uppercase;
+}
+.btn-secondary:hover{border-color:var(--gold);background:rgba(212,175,55,.07)}
+.hero-price{
+  font-family:var(--mono);font-size:11px;color:var(--gold-dim);letter-spacing:1px;
+}
+.hero-price strong{color:var(--gold);font-size:18px}
+
+/* Preview strip */
+.preview-strip{
+  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:48px;
+  max-width:860px;width:100%;
+}
+.prev-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:3px;
+  padding:10px 16px;min-width:130px;text-align:center;
+}
+.prev-asset{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:4px}
+.prev-sig{font-family:var(--mono);font-size:10px;font-weight:600}
+.sig-up{color:var(--green)}.sig-dn{color:var(--red)}.sig-neu{color:var(--neu)}
+.prev-score{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);margin-top:2px}
+
+/* ── SECTION HEADERS ── */
+section{padding:80px 24px;max-width:1100px;margin:0 auto}
+.section-label{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:4px;text-transform:uppercase;margin-bottom:12px}
+.section-title{font-size:clamp(24px,3vw,36px);font-weight:700;color:var(--text-bright);margin-bottom:16px;line-height:1.25}
+.section-sub{font-size:15px;color:var(--text-dim);max-width:560px;line-height:1.7}
+
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+@media(max-width:700px){.features-grid{grid-template-columns:1fr}}
+.feat{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:24px 22px;position:relative;overflow:hidden;transition:border-color .2s}
+.feat:hover{border-color:var(--gold-dim)}
+.feat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .2s}
+.feat:hover::before{opacity:1}
+.feat-icon{font-size:22px;margin-bottom:14px}
+.feat-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold);letter-spacing:1px;margin-bottom:8px}
+.feat-desc{font-size:13px;color:var(--text-dim);line-height:1.65}
+.feat-tag{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:8px;color:var(--green);border:1px solid rgba(0,201,122,.25);padding:2px 8px;border-radius:2px;letter-spacing:1px}
+
+/* ── WHAT YOU GET ── */
+.wg-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:3px;margin-top:48px;overflow:hidden}
+.wg-row{display:flex;align-items:flex-start;gap:16px;padding:16px 22px;border-bottom:1px solid var(--border)}
+.wg-row:last-child{border-bottom:none}
+.wg-check{color:var(--green);font-size:14px;flex-shrink:0;margin-top:2px}
+.wg-body{}
+.wg-title{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-bright);letter-spacing:.5px;margin-bottom:3px}
+.wg-desc{font-size:12px;color:var(--text-dim);line-height:1.55}
+
+/* ── HOW IT WORKS ── */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px;position:relative}
+@media(max-width:700px){.steps{grid-template-columns:1fr;gap:16px}}
+.step{padding:0 24px;text-align:center;position:relative}
+.step:not(:last-child)::after{content:'→';position:absolute;right:-10px;top:28px;font-size:18px;color:var(--border2)}
+@media(max-width:700px){.step::after{display:none}}
+.step-num{font-family:var(--mono);font-size:9px;color:var(--gold-dim);letter-spacing:3px;margin-bottom:16px;display:block}
+.step-icon{font-size:28px;margin-bottom:14px}
+.step-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold);letter-spacing:1px;margin-bottom:8px}
+.step-desc{font-size:13px;color:var(--text-dim);line-height:1.6}
+
+/* ── ACTIVOS ── */
+.assets-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:40px}
+@media(max-width:600px){.assets-grid{grid-template-columns:1fr 1fr}}
+.asset-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:16px 18px}
+.ac-label{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:4px}
+.ac-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text-bright);margin-bottom:6px}
+.ac-features{font-size:11px;color:var(--text-dim);line-height:1.7}
+
+/* ── PRICING ── */
+.pricing-wrap{display:flex;justify-content:center;margin-top:48px}
+.price-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-top:3px solid var(--gold);border-radius:3px;
+  padding:38px 44px;text-align:center;max-width:440px;width:100%;
+  position:relative;overflow:hidden;
+}
+.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:100%;background:linear-gradient(180deg,rgba(212,175,55,.04) 0%,transparent 40%);pointer-events:none}
+.price-badge{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px}
+.price-amount{font-family:var(--mono);font-size:52px;font-weight:600;color:var(--text-bright);line-height:1}
+.price-period{font-family:var(--mono);font-size:12px;color:var(--gold-dim);margin-bottom:28px;margin-top:4px}
+.price-features{text-align:left;margin-bottom:30px;display:flex;flex-direction:column;gap:10px}
+.pf{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text)}
+.pf-dot{color:var(--green);flex-shrink:0;margin-top:2px}
+.price-cta{
+  width:100%;padding:15px;background:var(--gold);color:#080600;
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:2px;
+  border-radius:2px;border:none;cursor:pointer;transition:background .15s;text-transform:uppercase;
+}
+.price-cta:hover{background:var(--gold2)}
+.price-note{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);margin-top:14px;line-height:1.6}
+
+/* ── FAQ ── */
+.faq-list{margin-top:40px;display:flex;flex-direction:column;gap:2px}
+.faq-item{background:var(--bg2);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.faq-q{
+  padding:16px 22px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;color:var(--text-bright);letter-spacing:.5px;
+  transition:background .15s;user-select:none;
+}
+.faq-q:hover{background:var(--bg3)}
+.faq-arrow{color:var(--gold-dim);transition:transform .2s;flex-shrink:0;margin-left:12px}
+.faq-item.open .faq-arrow{transform:rotate(90deg)}
+.faq-a{display:none;padding:0 22px 16px;font-size:13px;color:var(--text-dim);line-height:1.7;border-top:1px solid var(--border)}
+.faq-item.open .faq-a{display:block}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
+.foot-brand{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:3px;margin-bottom:8px}
+.foot-links{display:flex;justify-content:center;gap:20px;margin-bottom:12px;flex-wrap:wrap}
+.foot-links a{font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:1px;text-transform:uppercase}
+.foot-disc{font-family:var(--mono);font-size:8px;color:var(--gold-ghost);max-width:580px;margin:0 auto;line-height:1.7}
+
+/* divider */
+.divider{border:none;border-top:1px solid var(--border);margin:0}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <img src="logo.png" alt="Pegasus" class="nav-logo">
+    <span class="nav-name">PEGASUS</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Qué incluye</a>
+    <a href="#activos">Activos</a>
+    <a href="#precios">Precio</a>
+    <a href="#faq">FAQ</a>
+    <a href="dashboard.html" class="nav-cta">Acceder →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Market Intelligence · En tiempo real</div>
+  <h1>Análisis institucional.<br><span>Para el trader independiente.</span></h1>
+  <p class="hero-sub">
+    Oro, petróleo, Nasdaq, S&P 500, Dow Jones y Dólar — analizados cada 15 minutos
+    con el mismo modelo de scoring que usan los fondos. En español. Sin ruido.
+  </p>
+  <div class="hero-btns">
+    <a href="#precios" class="btn-primary">Suscribirse por $9.99 / mes →</a>
+    <a href="dashboard.html" class="btn-secondary">Ver el dashboard</a>
+  </div>
+  <div class="hero-price">Desde <strong>$9.99</strong> / mes · Cancela cuando quieras</div>
+
+  <!-- Live preview strip -->
+  <div class="preview-strip" id="preview-strip">
+    <div class="prev-card"><div class="prev-asset">ORO</div><div class="prev-sig sig-up" id="ps-gold">ALCISTA</div><div class="prev-score" id="pss-gold">Score +62</div></div>
+    <div class="prev-card"><div class="prev-asset">PETRÓLEO</div><div class="prev-sig sig-dn" id="ps-oil">BAJISTA</div><div class="prev-score" id="pss-oil">Score −38</div></div>
+    <div class="prev-card"><div class="prev-asset">NASDAQ</div><div class="prev-sig sig-up" id="ps-nq">ALCISTA</div><div class="prev-score" id="pss-nq">Score +44</div></div>
+    <div class="prev-card"><div class="prev-asset">S&P 500</div><div class="prev-sig sig-neu" id="ps-spy">NEUTRAL</div><div class="prev-score" id="pss-spy">Score +12</div></div>
+    <div class="prev-card"><div class="prev-asset">DOW JONES</div><div class="prev-sig sig-neu" id="ps-dow">NEUTRAL</div><div class="prev-score" id="pss-dow">Score +8</div></div>
+    <div class="prev-card"><div class="prev-asset">DÓLAR DXY</div><div class="prev-sig sig-dn" id="ps-dxy">BAJISTA</div><div class="prev-score" id="pss-dxy">Score −29</div></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">Lo que obtienes</div>
+  <div class="section-title">Todo lo que necesitas.<br>Nada que no necesitas.</div>
+  <p class="section-sub">Un modelo propio que combina técnico, macro y momentum para darte una señal clara en cada activo — sin tener que interpretar 12 indicadores tú solo.</p>
+
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">SEÑAL CLARA POR ACTIVO</div>
+      <div class="feat-desc">ALCISTA FUERTE / ALCISTA / NEUTRAL / BAJISTA / BAJISTA FUERTE. Sin ambigüedades. Sabes en segundos si hay setup o no.</div>
+      <span class="feat-tag">ACTUALIZA CADA 15 MIN</span>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📐</div>
+      <div class="feat-title">ZONAS DE ENTRADA Y STOP</div>
+      <div class="feat-desc">Zona de entrada calculada por ATR, stop loss obligatorio, TP1 y TP2. Con ratio Riesgo/Beneficio explícito: 1:2, 1:3, etc.</div>
+      <span class="feat-tag">BASADO EN ATR REAL</span>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🏦</div>
+      <div class="feat-title">CONTEXTO MACRO EN VIVO</div>
+      <div class="feat-desc">VIX, DXY, US10Y actualizados. Impacto macro específico para cada activo: cómo afecta el DXY de hoy al oro, cómo el US10Y al Nasdaq.</div>
+      <span class="feat-tag">CORRELACIONES REALES</span>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">RESUMEN EJECUTIVO</div>
+      <div class="feat-desc">5 métricas clave en un vistazo: ¿Hay setup?, calidad del setup (A/B/C), score del modelo, R/R, y rango esperado del día.</div>
+      <span class="feat-tag">DECISIÓN EN 10 SEG</span>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔍</div>
+      <div class="feat-title">QUÉ MONITOREAR HOY</div>
+      <div class="feat-desc">Para cada activo, qué dato, nivel o evento específico puede mover el mercado hoy. No tienes que adivinar — el modelo te dice qué mirar.</div>
+      <span class="feat-tag">CONTEXTUAL</span>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🛡</div>
+      <div class="feat-title">FACTOR DE INVALIDACIÓN</div>
+      <div class="feat-desc">Qué escenario específico haría que el análisis sea incorrecto. Niveles exactos de DXY, yields o VIX que cambiarían la señal.</div>
+      <span class="feat-tag">GESTIÓN DE RIESGO</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- WHAT YOU GET -->
+<section>
+  <div class="section-label">Detalle completo</div>
+  <div class="section-title">Lo que ves en cada activo</div>
+
+  <div class="wg-wrap">
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Gráfica de 30 días + precio y cambio del día</div>
+        <div class="wg-desc">Sparkline canvas con gradiente, precio en tiempo real y variación porcentual del día.</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Score del modelo: −100 a +100</div>
+        <div class="wg-desc">Combinación de técnico (RSI, EMAs, volumen), macro (VIX, DXY, yields) y momentum. Barra visual con pin de posición.</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Variables del modelo expuestas</div>
+        <div class="wg-desc">RSI, EMA50, EMA200, spread EMA, ATR, volumen relativo — los números que alimentan la señal.</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Sentimiento del mercado + titulares</div>
+        <div class="wg-desc">Barra bull/bear con porcentajes. Titulares recientes clasificados por dirección (alcista / bajista / neutral).</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Proyección a 1–3 meses: escenario optimista, base y pesimista</div>
+        <div class="wg-desc">Tres escenarios de precio con el factor principal que los activaría.</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Análisis swing 3–10 días para los 6 activos</div>
+        <div class="wg-desc">Tab dedicado con posicionamiento institucional derivado del modelo y horizonte temporal sugerido.</div>
+      </div>
+    </div>
+    <div class="wg-row">
+      <div class="wg-check">✓</div>
+      <div class="wg-body">
+        <div class="wg-title">Tab de alertas y señales en tiempo real</div>
+        <div class="wg-desc">Listado cronológico de cambios de señal y eventos relevantes detectados automáticamente cada 15 minutos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ACTIVOS -->
+<section id="activos">
+  <div class="section-label">Cobertura</div>
+  <div class="section-title">6 activos clave del mercado global</div>
+  <p class="section-sub">Los activos con mayor liquidez y relevancia macro. Los mismos que mueven el resto del mercado.</p>
+
+  <div class="assets-grid">
+    <div class="asset-card">
+      <div class="ac-label">COMMODITIES</div>
+      <div class="ac-name">ORO (XAU/USD)</div>
+      <div class="ac-features">Señal · Zonas ATR · Impacto DXY/yields · Proyección</div>
+    </div>
+    <div class="asset-card">
+      <div class="ac-label">COMMODITIES</div>
+      <div class="ac-name">PETRÓLEO WTI</div>
+      <div class="ac-features">Señal · Zonas ATR · OPEC/inventarios EIA · Proyección</div>
+    </div>
+    <div class="asset-card">
+      <div class="ac-label">ÍNDICES US</div>
+      <div class="ac-name">NASDAQ (NQ)</div>
+      <div class="ac-features">Señal · Zonas ATR · Correlación yields/tech · Proyección</div>
+    </div>
+    <div class="asset-card">
+      <div class="ac-label">ÍNDICES US</div>
+      <div class="ac-name">S&P 500 (ES)</div>
+      <div class="ac-features">Señal · Zonas ATR · VIX · Proyección</div>
+    </div>
+    <div class="asset-card">
+      <div class="ac-label">ÍNDICES US</div>
+      <div class="ac-name">DOW JONES (YM)</div>
+      <div class="ac-features">Señal · Zonas ATR · Sector industrial · Proyección</div>
+    </div>
+    <div class="asset-card">
+      <div class="ac-label">DIVISAS</div>
+      <div class="ac-name">DÓLAR (DXY)</div>
+      <div class="ac-features">Señal · Zonas ATR · Diferencial tasas · Proyección</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="section-label">Cómo funciona</div>
+  <div class="section-title">Modelo propio, datos reales, 24/7</div>
+
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">01</span>
+      <div class="step-icon">📡</div>
+      <div class="step-title">DATOS EN TIEMPO REAL</div>
+      <div class="step-desc">yfinance + GDELT + NewsAPI. Precios OHLCV, indicadores macro y sentimiento de noticias actualizados cada 15 minutos.</div>
+    </div>
+    <div class="step">
+      <span class="step-num">02</span>
+      <div class="step-icon">🧮</div>
+      <div class="step-title">MOTOR DE SCORING</div>
+      <div class="step-desc">Técnico 40% · Macro 35% · Momentum 25%. Score de −100 a +100 que determina señal y calidad del setup.</div>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <div class="step-icon">📊</div>
+      <div class="step-title">DASHBOARD LIMPIO</div>
+      <div class="step-desc">Todo el análisis presentado en un panel claro. Sin ruido. La decisión de si hay setup o no, en menos de 10 segundos.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PRICING -->
+<section id="precios">
+  <div class="section-label">Precio</div>
+  <div class="section-title">Sin sorpresas</div>
+  <p class="section-sub">Un plan. Todo incluido. Cancela cuando quieras.</p>
+
+  <div class="pricing-wrap">
+    <div class="price-card">
+      <div class="price-badge">SUSCRIPCIÓN MENSUAL</div>
+      <div class="price-amount">$9.99</div>
+      <div class="price-period">USD · por mes · cancela cuando quieras</div>
+      <div class="price-features">
+        <div class="pf"><span class="pf-dot">✓</span>6 activos analizados en tiempo real</div>
+        <div class="pf"><span class="pf-dot">✓</span>Señal + score + zonas de entrada/stop/TP</div>
+        <div class="pf"><span class="pf-dot">✓</span>R/R calculado · Calidad del setup A/B/C</div>
+        <div class="pf"><span class="pf-dot">✓</span>Impacto macro por activo (VIX, DXY, yields)</div>
+        <div class="pf"><span class="pf-dot">✓</span>Rango esperado del día (ATR)</div>
+        <div class="pf"><span class="pf-dot">✓</span>Factor de invalidación + qué monitorear hoy</div>
+        <div class="pf"><span class="pf-dot">✓</span>Análisis swing 3–10 días</div>
+        <div class="pf"><span class="pf-dot">✓</span>Actualización automática cada 15 minutos</div>
+        <div class="pf"><span class="pf-dot">✓</span>Acceso 24/7 desde cualquier dispositivo</div>
+      </div>
+      <button class="price-cta" onclick="alert('Próximamente — activando pago seguro vía Stripe')">Suscribirse ahora →</button>
+      <div class="price-note">Pago seguro vía Stripe · SSL · Sin permanencia</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-label">Preguntas frecuentes</div>
+  <div class="section-title">Lo que más nos preguntan</div>
+
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Es esto una recomendación de inversión? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">No. Pegasus Market Intelligence es una herramienta de análisis educativo. Las señales y zonas son calculadas por un modelo cuantitativo, no por asesores financieros registrados. Siempre opera con tu propio criterio y gestión de riesgo.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Con qué frecuencia se actualiza la data? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">Cada 15 minutos de forma automática. El servidor descarga precios frescos de yfinance, recalcula el scoring de los 6 activos y actualiza el análisis macro. El dashboard muestra un contador hasta la próxima actualización.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Funciona para futuros, forex y acciones también? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">En esta versión cubre los 6 activos base: oro, petróleo WTI, Nasdaq, S&P 500, Dow Jones y DXY. Son futuros de alta liquidez y el DXY. Próximas versiones expandirán la cobertura.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Qué pasa si cancelo? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">Pierdes acceso al dashboard al finalizar el período pagado. Sin cargos adicionales, sin permanencia. Puedes volver a suscribirte cuando quieras.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Necesito saber programar o instalar algo? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">No. El dashboard funciona desde el navegador, en cualquier dispositivo. No requiere instalación, ni conocimientos técnicos. Solo abrir la URL y ver el análisis.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">¿Qué tan preciso es el modelo? <span class="faq-arrow">›</span></div>
+      <div class="faq-a">El modelo combina indicadores técnicos clásicos con contexto macro real. Como todo análisis cuantitativo, no es infalible — los mercados tienen eventos impredecibles. El factor de invalidación que mostramos en cada activo está ahí para que sepas cuándo el modelo puede estar equivocado.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<hr class="divider">
+<footer>
+  <div class="foot-brand">PEGASUS TRADING TOOLS</div>
+  <div class="foot-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="#features">Qué incluye</a>
+    <a href="#precios">Precio</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="foot-disc">
+    Análisis educativo únicamente. No constituye asesoramiento financiero ni recomendación de inversión.
+    Los datos de mercado son provistos por yfinance y pueden tener demoras. Opera siempre con tu propio criterio y gestión de riesgo.
+    © 2026 Pegasus Trading Tools.
+  </div>
+</footer>
+
+<script>
+// FAQ toggle
+function toggleFaq(el) {
+  const item = el.parentElement;
+  item.classList.toggle('open');
+}
+
+// Load live signals from backend if available
+const API = location.protocol === 'file:' ? 'http://localhost:5050' : '';
+const SIG_MAP = {
+  'ALCISTA FUERTE': { lbl: 'ALCISTA FUERTE', cls: 'sig-up' },
+  'ALCISTA':        { lbl: 'ALCISTA',        cls: 'sig-up' },
+  'NEUTRAL':        { lbl: 'NEUTRAL',         cls: 'sig-neu' },
+  'BAJISTA':        { lbl: 'BAJISTA',         cls: 'sig-dn' },
+  'BAJISTA FUERTE': { lbl: 'BAJISTA FUERTE', cls: 'sig-dn' },
+};
+
+fetch(API + '/api/data', { cache: 'no-cache' })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'INICIANDO') return;
+    const assets = data.assets || {};
+    const map = { gold:'gold', oil:'oil', nq:'nq', spy:'spy', dow:'dow', dxy:'dxy' };
+    Object.entries(map).forEach(([id, key]) => {
+      const a = assets[id];
+      if (!a) return;
+      const sig = SIG_MAP[a.signal] || { lbl: a.signal, cls: 'sig-neu' };
+      const sigEl = document.getElementById('ps-' + key);
+      const scEl  = document.getElementById('pss-' + key);
+      if (sigEl) { sigEl.textContent = sig.lbl; sigEl.className = 'prev-sig ' + sig.cls; }
+      if (scEl)  { const sc = a.score || 0; scEl.textContent = 'Score ' + (sc > 0 ? '+' : '') + sc; }
+    });
+  })
+  .catch(() => {}); // silently use static placeholders if backend not running
+</script>
+</body>
+</html>

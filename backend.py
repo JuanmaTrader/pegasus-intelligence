@@ -17,7 +17,7 @@ import time
 import threading
 import datetime
 import logging
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 import yfinance as yf
 import pandas as pd
 import requests
@@ -26,9 +26,10 @@ import anthropic
 # ─────────────────────────────────────────────────────────────
 # CONFIGURACIÓN — Pon tu API key de Anthropic aquí
 # ─────────────────────────────────────────────────────────────
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "TU_API_KEY_AQUI")
-NEWS_API_KEY      = os.environ.get("NEWS_API_KEY", "")       # opcional, gratis en newsapi.org
-REFRESH_MINUTES   = 15
+ANTHROPIC_API_KEY  = os.environ.get("ANTHROPIC_API_KEY", "TU_API_KEY_AQUI")
+NEWS_API_KEY       = os.environ.get("NEWS_API_KEY", "")       # opcional, gratis en newsapi.org
+SUBSCRIBER_KEY     = os.environ.get("SUBSCRIBER_KEY", "")    # si está vacío, acceso libre (modo dev)
+REFRESH_MINUTES    = 15
 
 # ─────────────────────────────────────────────────────────────
 # ACTIVOS
@@ -576,7 +577,7 @@ def cors_response(data):
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
-@app.route("/")
+@app.route("/api/info")
 def index():
     with STATE_LOCK:
         return cors_response({
@@ -584,11 +585,6 @@ def index():
             "status":      STATE["status"],
             "last_update": STATE["last_update"],
             "assets":      list(STATE["assets"].keys()),
-            "endpoints": {
-                "all_data":  "/api/data",
-                "one_asset": "/api/asset/<id>",
-                "macro":     "/api/macro",
-            }
         })
 
 @app.route("/api/data")
@@ -626,6 +622,10 @@ def api_status():
             "errors":      STATE["errors"][-5:],
         })
 
+@app.route("/")
+def landing():
+    return send_from_directory(".", "index.html")
+
 @app.route("/dashboard")
 def dashboard_page():
     return send_from_directory(".", "dashboard.html")
@@ -633,6 +633,17 @@ def dashboard_page():
 @app.route("/logo.png")
 def logo_png():
     return send_from_directory(".", "logo.png")
+
+@app.route("/api/verify", methods=["POST"])
+def verify_key():
+    """Valida la clave de suscriptor enviada desde el frontend."""
+    if not SUBSCRIBER_KEY:
+        return cors_response({"ok": True, "dev": True})
+    body = request.get_json(silent=True) or {}
+    key  = body.get("key", "").strip()
+    if key == SUBSCRIBER_KEY:
+        return cors_response({"ok": True})
+    return cors_response({"ok": False, "error": "Clave inválida"}), 401
 
 def _serialize_asset(a: dict) -> dict:
     """Convierte el asset a formato limpio para el frontend."""

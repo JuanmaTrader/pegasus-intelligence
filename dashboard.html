@@ -245,6 +245,24 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--sans);font-si
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;padding:24px;text-align:center">
+  <img src="logo.png" alt="Pegasus" style="width:80px;height:80px;object-fit:contain;border-radius:3px;margin-bottom:8px">
+  <div style="font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:4px">MARKET INTELLIGENCE</div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text);margin-top:4px">Ingresa tu clave de acceso</div>
+  <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;margin-top:8px">
+    <input id="login-key" type="password" placeholder="••••••••••••••••"
+      style="background:var(--bg2);border:1px solid var(--border);border-radius:2px;padding:11px 14px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;outline:none;letter-spacing:2px"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()"
+      style="padding:11px;background:var(--gold);color:#080600;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:2px;border:none;border-radius:2px;cursor:pointer;text-transform:uppercase">
+      ACCEDER →
+    </button>
+    <div id="login-err" style="font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:1px;display:none">CLAVE INCORRECTA — VERIFICA TU ACCESO</div>
+  </div>
+  <a href="index.html" style="font-family:var(--mono);font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-top:16px">← VOLVER A LA PÁGINA PRINCIPAL</a>
+</div>
+
 <!-- LOADING -->
 <div id="loading">
   <div class="spin"></div>
@@ -362,6 +380,49 @@ let selAsset = 'gold';
 let retryTimer = null;
 let cdownTimer = null;
 let nextAt = null;
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function checkAuth() {
+  const saved = sessionStorage.getItem('pgk');
+  try {
+    const r = await fetch(API + '/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: saved || '' })
+    });
+    const d = await r.json();
+    if (d.ok) { loadData(); return; }
+  } catch(e) {
+    // Backend sin auth configurada — acceso libre
+    loadData(); return;
+  }
+  // Requiere login
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function doLogin() {
+  const key = document.getElementById('login-key').value.trim();
+  if (!key) return;
+  try {
+    const r = await fetch(API + '/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      sessionStorage.setItem('pgk', key);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('login-err').style.display = 'none';
+      loadData();
+    } else {
+      document.getElementById('login-err').style.display = 'block';
+    }
+  } catch(e) {
+    loadData(); // si falla la verificación, acceso libre
+  }
+}
 
 // ── LOAD ──────────────────────────────────────────────────────
 async function loadData() {
@@ -1187,7 +1248,7 @@ window.addEventListener('resize', () => {
 });
 
 // ── START ─────────────────────────────────────────────────────
-loadData();
+checkAuth();
 tick();
 setInterval(tick, 1000);
 </script>
