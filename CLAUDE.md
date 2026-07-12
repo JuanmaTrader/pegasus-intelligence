@@ -1,6 +1,30 @@
 # Pegasus Intelligence / Pegasus MarketQuake — Documento Maestro
 
-Estado real al 11-jul-2026 noche. Este documento refleja decisiones tomadas, no el plan original — leer esto antes que `session_09jun2026_pegasus_intel.md` (memoria histórica, superada en precio/niveles).
+Estado real al 12-jul-2026 tarde. Este documento refleja decisiones tomadas, no el plan original — leer esto antes que `session_09jun2026_pegasus_intel.md` (memoria histórica, superada en precio/niveles).
+
+**Nota de repos — importante para no perder tiempo la próxima vez:** este archivo vive en el repo `pegasus_intelligence` (el prototipo standalone, `backend.py`/`dashboard.html`, congelado desde el 12-jul madrugada), pero casi todo lo que describe abajo sobre `/intelligence/pro` en producción vive en un repo **distinto**: `C:\Juanma\proyectos\NQH2026\CLOUD` (remoto `github.com/JuanmaTrader/pegasus-trading.git`), que corre junto al bot de trading. Ahí están `app.py`, `intelligence_engine.py`, `templates/intelligence_pro.html`. Este documento se sigue manteniendo aquí por continuidad histórica, pero para tocar código real hay que ir a ese otro repo.
+
+## ✅ Actualización 12-jul-2026 tarde — `/intelligence/pro` ya es un producto completo, no un placeholder
+
+La sesión del 12-jul madrugada dejó `/intelligence/pro` con Dashboard ejecutivo (tarjetas resumen + clic para expandir, exactamente el patrón "Bloomberg Terminal" que Juanma pidió) y 6 pestañas ya funcionando en producción: **Dashboard, MarketQuake, Gamma (cadena de opciones completa), Macro, Noticias (calendario + paradoja), Cascade Tracker** (impacto mecánico real tipo NVDA→Nasdaq + correlación sectorial + buscador de cualquier ticker). Nada de esto estaba reflejado en la versión anterior de este documento — quedó desactualizado apenas se construyó.
+
+Esta tarde (12-jul) se agregó, sobre esa misma base, sin tocar lo que ya funcionaba:
+
+- **Activos** (pestaña nueva) — destapa por fin las zonas de entrada/stop/TP1/TP2/R:R e IV Rank reales de los 6 activos (`_build_entry`, `compute_iv_rank`) que ya se calculaban en el motor desde hacía semanas pero nunca se mostraban en la página PRO — solo aparecían borrosas en la versión gratis como anzuelo. Era el hueco más grande que quedaba del diferenciador de pago.
+- **Screener** (pestaña nueva) — el mismo motor de score/convergencia/entrada/IV Rank, pero para cualquier ticker de Yahoo Finance (no solo los 6 fijos). Nueva función `analyze_ticker()` en `intelligence_engine.py` + ruta `/api/intelligence/screener/<ticker>`.
+- **Radar AI** (pestaña nueva) — reporte diario tipo Bloomberg (resumen ejecutivo, régimen/macro, gamma/dealers, MarketQuake, cascade, catalizadores, conclusión operativa) compuesto 100% por reglas sobre datos ya calculados en `STATE` — **sin Claude real**, tal como se había recomendado (fase 2, cuando haya suscriptores que lo justifiquen). Incluye una "convicción compuesta" transparente (0-100, con sus dos componentes — alineación de activos y estabilidad de MarketQuake — visibles, no una caja negra). Nueva función `compute_radar_ai()`.
+- **Call Wall / Put Wall / Max Pain** — se agregaron al módulo Gamma existente. Requirió trackear open interest de calls y puts por separado por strike (antes se combinaban en `strike_gex`) y una función nueva `_compute_max_pain()` con la metodología estándar (el strike que minimiza el pago total a tenedores de opciones al vencimiento).
+
+**Verificado antes de subir** (sin acceso a levantar el Flask completo por la DB): `intelligence_engine.py` no depende de Flask/DB, así que se probaron `analyze_ticker()`, `compute_gamma_exposure()` y `update_all()` completo de forma standalone contra APIs reales (Yahoo, CFTC, FRED) — todo devolvió datos reales coherentes (ej. SPY: Call Wall $760, Put Wall $540, Max Pain $745). El template se renderizó con Jinja2 en aislamiento (stubbing `current_user`/`request`) sin errores, y el bloque `<script>` se extrajo y pasó `node --check` sin errores de sintaxis.
+
+**Descartado por hoy — Liquidez** (icebergs, DOM, order book, footprint, CVD): no existe fuente gratis y viva de datos Level 2 en ningún lado confiable. Se dejó fuera del menú en vez de simular con mockup — mostrar un módulo de "Liquidez" sin dato real detrás rompería la misma confianza que se ganó con Valuation (regla ya establecida más abajo: nunca mockups falsos). Si aparece una fuente gratis viable más adelante, se retoma.
+
+**Pendiente de decidir con Juanma (actualizado):**
+1. Imagen de portada del producto en Lemon Squeezy (ver más abajo, prompt ya entregado, sigue pendiente que Juanma la genere).
+2. Configurar `RESEND_API_KEY` para correo de bienvenida automático (sigue pendiente, ver más abajo).
+3. Put/Call Ratio — sigue sin fuente gratis viva; con Activos/Screener/Radar AI ya construidos, el PRO tiene bastante profundidad sin este sensor.
+4. Traer Spearman/OBV/BOP sectorial desde Valuation para sumar más sensores a MarketQuake (opcional, no urgente).
+5. Claude real (fase 2) — sigue en pausa por costo. Radar AI ya cubre ese hueco de producto sin ese costo por ahora.
 
 ## Qué es
 
@@ -139,9 +163,4 @@ Juanma señaló el prototipo original (`pegasus_intelligence/pegasus_earthquake_
 
 ## Pendiente de decidir con Juanma
 
-1. **¿Claude real en el lanzamiento inicial o fase 2?** — recomendación: fase 2.
-2. Put/Call Ratio — buscar fuente alternativa viva, o lanzar MarketQuake sin este sensor (5/5 reales ya es sólido).
-3. Traer Spearman/OBV/BOP sectorial desde Valuation para sumar más sensores (opcional, no urgente).
-3. Configurar Resend para correo automático (ver arriba).
-4. Construir la UI completa de MarketQuake — la data ya está conectada, falta la interfaz visual dentro de `/intelligence/pro`.
-5. Imagen de portada del producto en Lemon Squeezy (ver arriba, prompt ya entregado).
+Ver la lista "actualizado" cerca del inicio de este documento (sección 12-jul tarde) — reemplaza esta. Construir la UI completa de MarketQuake ya se hizo (ver sección justo arriba de esta); Activos/Screener/Radar AI también, ver el inicio del documento.
