@@ -1,0 +1,524 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080600;--bg2:#0f0e0a;--bg3:#131109;--bg4:#1a1810;
+  --border:#2e2a18;--gold:#D4AF37;--gold-dim:#7a6a3a;--gold-ghost:#4a3a10;
+  --green:#00C97A;--red:#FF4455;--blue:#7A9AB8;--text:#e8ddb8;--text2:#c8b870;--text3:#7a6a3a;
+  --orange:#FF8C00;--yellow:#FFD700;
+}
+body{background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--text);padding:12px}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ── HEADER ── */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--gold);letter-spacing:3px}
+.brand-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-top:1px}
+.status-row{display:flex;align-items:center;gap:10px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--green)}50%{opacity:.4;box-shadow:none}}
+.status-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-dim);letter-spacing:2px}
+
+/* ── SEISMIC MONITOR ── */
+.seismic-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden}
+.seismic-label{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:3px;margin-bottom:8px;display:flex;justify-content:space-between}
+.seismic-canvas-wrap{position:relative;height:80px}
+canvas#seismic{width:100%;height:80px;display:block}
+.seismic-center-line{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(212,175,55,.15);pointer-events:none}
+.seismic-zones{display:flex;justify-content:space-between;margin-top:6px}
+.sz{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-ghost);letter-spacing:1px}
+
+/* ── RICHTER GAUGE ── */
+.gauges-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.gauge-card{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:11px 13px;text-align:center;position:relative;overflow:hidden}
+.gauge-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.gc-normal::before{background:var(--green)}
+.gc-caution::before{background:var(--yellow)}
+.gc-alert::before{background:var(--orange);animation:glow-orange 1.5s infinite}
+.gc-critical::before{background:var(--red);animation:glow-red 1s infinite}
+@keyframes glow-orange{0%,100%{box-shadow:0 0 8px var(--orange)}50%{box-shadow:0 0 20px var(--orange)}}
+@keyframes glow-red{0%,100%{box-shadow:0 0 10px var(--red)}50%{box-shadow:0 0 25px var(--red)}}
+.gc-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:2px;margin-bottom:6px}
+.gc-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
+.gc-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px}
+.gc-normal .gc-val{color:var(--green)}
+.gc-caution .gc-val{color:var(--yellow)}
+.gc-alert .gc-val{color:var(--orange)}
+.gc-critical .gc-val{color:var(--red)}
+
+/* ── EARTHQUAKE ALERT ── */
+.eq-alert{border-radius:4px;padding:14px 16px;margin-bottom:12px;position:relative;overflow:hidden;animation:shake-in .4s ease}
+@keyframes shake-in{0%{transform:translateX(-4px)}25%{transform:translateX(4px)}50%{transform:translateX(-2px)}75%{transform:translateX(2px)}100%{transform:translateX(0)}}
+.eq-alert.level-0{background:rgba(0,201,122,.04);border:1px solid rgba(0,201,122,.2)}
+.eq-alert.level-1{background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.25)}
+.eq-alert.level-2{background:rgba(255,140,0,.06);border:1px solid rgba(255,140,0,.35)}
+.eq-alert.level-3{background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.4);animation:shake-in .4s ease, pulse-border 1.5s infinite}
+@keyframes pulse-border{0%,100%{border-color:rgba(255,68,85,.4)}50%{border-color:rgba(255,68,85,.9)}}
+.eq-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.eq-icon{font-size:22px;animation:icon-pulse 2s infinite}
+@keyframes icon-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.eq-title{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:1px}
+.eq-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-dim);margin-top:2px}
+.eq-level-0 .eq-title{color:var(--green)}
+.eq-level-1 .eq-title{color:var(--yellow)}
+.eq-level-2 .eq-title{color:var(--orange)}
+.eq-level-3 .eq-title{color:var(--red)}
+.eq-body{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px}
+.eq-body b{color:var(--gold)}
+
+/* ── SIGNAL CONFIRMATIONS ── */
+.confirmations{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.conf{background:var(--bg3);border-radius:2px;padding:8px 10px;display:flex;align-items:center;gap:7px}
+.conf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conf-dot.active{animation:conf-blink 1s infinite}
+@keyframes conf-blink{0%,100%{opacity:1}50%{opacity:.3}}
+.conf-txt{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.5px;line-height:1.3}
+
+/* ── WHAT TO DO ── */
+.action-box{border-radius:3px;padding:11px 14px;margin-bottom:10px}
+.action-box.intel-only{background:rgba(212,175,55,.05);border:1px solid rgba(212,175,55,.2)}
+.action-hdr{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:3px;margin-bottom:7px}
+.action-items{display:flex;flex-direction:column;gap:5px}
+.action-item{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text2);line-height:1.5}
+.action-bullet{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ── RICHTER SCALE LEGEND ── */
+.richter{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px 14px;margin-bottom:12px}
+.richter-hdr{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:3px;margin-bottom:10px}
+.richter-scale{display:flex;flex-direction:column;gap:5px}
+.rs-row{display:flex;align-items:center;gap:10px}
+.rs-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rs-label{font-family:'IBM Plex Mono',monospace;font-size:9px;width:100px;flex-shrink:0}
+.rs-bar-wrap{flex:1;background:var(--bg);height:5px;border-radius:3px;overflow:hidden}
+.rs-bar{height:5px;border-radius:3px}
+.rs-desc{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)}
+
+/* ── SENSOR GRID ── */
+.sensors-hdr{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:3px;margin-bottom:8px}
+.sensors{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sensor{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center}
+.sensor.firing{border-color:rgba(255,140,0,.5);background:rgba(255,140,0,.04)}
+.sensor.critical{border-color:rgba(255,68,85,.5);background:rgba(255,68,85,.04);animation:sensor-pulse .8s infinite}
+@keyframes sensor-pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.s-name{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.5px}
+.sensor.firing .s-name{color:var(--orange)}
+.sensor.critical .s-name{color:var(--red)}
+.s-val{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600}
+.s-bar{width:50px;height:3px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:3px}
+.s-fill{height:3px;border-radius:2px}
+
+/* ── HISTORY ── */
+.history-hdr{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:3px;margin-bottom:8px}
+.hist-item{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:2px;margin-bottom:5px}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hist-body{flex:1}
+.hist-txt{font-size:11px;color:var(--text2)}
+.hist-meta{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-ghost);margin-top:2px}
+.hist-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-ghost);flex-shrink:0}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:3px;margin-bottom:12px}
+.tab{flex:1;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px;text-align:center;cursor:pointer;border-radius:2px;color:var(--text3);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--gold)}
+.tab.active{background:var(--bg4);color:var(--gold);border:1px solid var(--border)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+</style>
+
+<div style="max-width:700px;margin:0 auto">
+
+<!-- HEADER -->
+<div class="top">
+  <div>
+    <div class="brand">PEGASUS INTELLIGENCE</div>
+    <div class="brand-sub">EARLY WARNING SYSTEM · MARKET SEISMOGRAPH</div>
+  </div>
+  <div class="status-row">
+    <div class="status-dot"></div>
+    <span class="status-lbl">MONITOREANDO</span>
+    <span class="mono" style="font-size:9px;color:var(--gold-ghost)" id="clk2">--:--</span>
+  </div>
+</div>
+
+<!-- SEISMOGRAPH CANVAS -->
+<div class="seismic-wrap">
+  <div class="seismic-label">
+    <span>SISMÓGRAFO DE FLUJO — ANOMALÍAS EN TIEMPO REAL</span>
+    <span style="color:var(--gold)" id="seismic-status">ACTIVO</span>
+  </div>
+  <div class="seismic-canvas-wrap">
+    <canvas id="seismic"></canvas>
+    <div class="seismic-center-line"></div>
+  </div>
+  <div class="seismic-zones">
+    <span class="sz">VENTA INSTITUCIONAL</span>
+    <span class="sz" style="color:var(--gold)">ZONA NORMAL</span>
+    <span class="sz">COMPRA INSTITUCIONAL</span>
+  </div>
+</div>
+
+<!-- RICHTER GAUGES -->
+<div class="gauges-row">
+  <div class="gauge-card gc-alert">
+    <div class="gc-lbl">MAGNITUD SEÑAL</div>
+    <div class="gc-val">6.2</div>
+    <div class="gc-sub" style="color:var(--orange)">ALERTA ACTIVA</div>
+  </div>
+  <div class="gauge-card gc-caution">
+    <div class="gc-lbl">CONFIRMACIONES</div>
+    <div class="gc-val">4/9</div>
+    <div class="gc-sub" style="color:var(--yellow)">DE 3 MÍNIMAS</div>
+  </div>
+  <div class="gauge-card gc-caution">
+    <div class="gc-lbl">VELOCIDAD</div>
+    <div class="gc-val">2.8x</div>
+    <div class="gc-sub" style="color:var(--yellow)">vs PROMEDIO 20D</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('alert',this)">🚨 ALERTA ACTIVA</div>
+  <div class="tab" onclick="switchTab('sensors',this)">📡 SENSORES</div>
+  <div class="tab" onclick="switchTab('richter',this)">📊 ESCALA</div>
+  <div class="tab" onclick="switchTab('history',this)">🕐 HISTORIAL</div>
+</div>
+
+<!-- TAB: ALERTA -->
+<div class="tab-content active" id="tab-alert">
+
+  <!-- EARTHQUAKE ALERT CARD -->
+  <div class="eq-alert level-2" id="eq-main">
+    <div class="eq-header">
+      <span class="eq-icon">⚠️</span>
+      <div>
+        <div class="eq-title eq-level-2">ANOMALÍA DETECTADA — NIVEL MODERADO</div>
+        <div class="eq-time" id="eq-time">Detectado a las --:-- ET · Duración: 18 min</div>
+      </div>
+    </div>
+    <div class="eq-body">
+      Rotación <b>XLF → XLK</b> acelerándose a <b>2.8x</b> sobre lo normal. El volumen en financieras subió <b>+180%</b> vs promedio de 20 días mientras el Nasdaq recibe flujo inusual. El <b>VIX</b> subió 1.2 puntos en 25 minutos y el <b>Put/Call ratio</b> trepó a 1.24 — cobertura defensiva creciente. <b>Spearman del SPY cayó de 62 a 31</b> en esta sesión — correlación precio/volumen deteriorándose.
+    </div>
+
+    <!-- CONFIRMATIONS -->
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:6px">VARIABLES CONFIRMANDO (4 de 9)</div>
+    <div class="confirmations">
+      <div class="conf"><div class="conf-dot active" style="background:var(--orange)"></div><div class="conf-txt" style="color:var(--orange)">Volumen XLF<br>+180% anómalo</div></div>
+      <div class="conf"><div class="conf-dot active" style="background:var(--orange)"></div><div class="conf-txt" style="color:var(--orange)">VIX +1.2pts<br>25 minutos</div></div>
+      <div class="conf"><div class="conf-dot active" style="background:var(--orange)"></div><div class="conf-txt" style="color:var(--orange)">Put/Call<br>1.24 ↑</div></div>
+      <div class="conf"><div class="conf-dot active" style="background:var(--orange)"></div><div class="conf-txt" style="color:var(--orange)">Spearman SPY<br>62→31 ↓</div></div>
+      <div class="conf"><div class="conf-dot" style="background:var(--border)"></div><div class="conf-txt" style="color:var(--text3)">COT shift<br>sin confirmar</div></div>
+      <div class="conf"><div class="conf-dot" style="background:var(--border)"></div><div class="conf-txt" style="color:var(--text3)">HY Spread<br>sin confirmar</div></div>
+      <div class="conf"><div class="conf-dot" style="background:var(--border)"></div><div class="conf-txt" style="color:var(--text3)">DBMF flujo<br>sin confirmar</div></div>
+      <div class="conf"><div class="conf-dot" style="background:var(--border)"></div><div class="conf-txt" style="color:var(--text3)">OBV XLK<br>sin confirmar</div></div>
+      <div class="conf"><div class="conf-dot" style="background:var(--border)"></div><div class="conf-txt" style="color:var(--text3)">BOP breadth<br>sin confirmar</div></div>
+    </div>
+
+    <!-- ACTION BOX -->
+    <div class="action-box intel-only">
+      <div class="action-hdr">▶ QUÉ SIGNIFICA ESTO — GUÍA DE ACCIÓN</div>
+      <div class="action-items">
+        <div class="action-item"><span class="action-bullet" style="color:var(--orange)">→</span><span>El dinero está saliendo de <b style="color:var(--gold)">financieras (XLF)</b> y rotando hacia <b style="color:var(--gold)">tecnología (XLK)</b>. Esto históricamente presiona al <b style="color:var(--gold)">Dow Jones</b> y beneficia al <b style="color:var(--gold)">Nasdaq</b> en las siguientes horas.</span></div>
+        <div class="action-item"><span class="action-bullet" style="color:var(--orange)">→</span><span>El Put/Call en 1.24 indica que los institucionales están comprando protección. Esto precede movimientos bruscos — sin dirección confirmada todavía.</span></div>
+        <div class="action-item"><span class="action-bullet" style="color:var(--yellow)">→</span><span>Con 4 de 9 confirmaciones activas, la alerta es <b style="color:var(--orange)">MODERADA</b>. Si llega a 6 confirmaciones simultáneas → sube a <b style="color:var(--red)">CRÍTICA</b> y recibes notificación inmediata.</span></div>
+        <div class="action-item"><span class="action-bullet" style="color:var(--text3)">→</span><span style="color:var(--text3)">Acción sugerida: vigila el nivel $702.96 en SPY como soporte clave. Si lo pierde con este volumen anómalo activo → alta probabilidad de continuación bajista.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULATE BUTTONS -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button onclick="setLevel(0)" style="flex:1;background:rgba(0,201,122,.1);border:1px solid rgba(0,201,122,.3);color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;border-radius:2px;cursor:pointer;letter-spacing:1px">✅ NORMAL</button>
+    <button onclick="setLevel(1)" style="flex:1;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);color:var(--yellow);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;border-radius:2px;cursor:pointer;letter-spacing:1px">⚡ PRECAUCIÓN</button>
+    <button onclick="setLevel(2)" style="flex:1;background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.4);color:var(--orange);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;border-radius:2px;cursor:pointer;letter-spacing:1px">⚠️ ALERTA</button>
+    <button onclick="setLevel(3)" style="flex:1;background:rgba(255,68,85,.12);border:1px solid rgba(255,68,85,.5);color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:7px;border-radius:2px;cursor:pointer;letter-spacing:1px;animation:pulse-btn 1s infinite">🚨 CRÍTICO</button>
+  </div>
+  <style>@keyframes pulse-btn{0%,100%{opacity:1}50%{opacity:.6}}</style>
+</div>
+
+<!-- TAB: SENSORS -->
+<div class="tab-content" id="tab-sensors">
+  <div class="sensors-hdr">9 SENSORES ACTIVOS — CONFIRMACIÓN CRUZADA</div>
+  <div class="sensors">
+    <div class="sensor firing">
+      <div><div class="s-name">VOLUMEN ANÓMALO XLF</div><div class="s-bar"><div class="s-fill" style="width:80%;background:var(--orange)"></div></div></div>
+      <div class="s-val" style="color:var(--orange)">+180%</div>
+    </div>
+    <div class="sensor firing">
+      <div><div class="s-name">VIX SPIKE 25MIN</div><div class="s-bar"><div class="s-fill" style="width:65%;background:var(--orange)"></div></div></div>
+      <div class="s-val" style="color:var(--orange)">+1.2pt</div>
+    </div>
+    <div class="sensor firing">
+      <div><div class="s-name">PUT/CALL RATIO</div><div class="s-bar"><div class="s-fill" style="width:72%;background:var(--orange)"></div></div></div>
+      <div class="s-val" style="color:var(--orange)">1.24</div>
+    </div>
+    <div class="sensor firing">
+      <div><div class="s-name">SPEARMAN SPY</div><div class="s-bar"><div class="s-fill" style="width:60%;background:var(--orange)"></div></div></div>
+      <div class="s-val" style="color:var(--orange)">31↓</div>
+    </div>
+    <div class="sensor">
+      <div><div class="s-name">COT SHIFT SEMANAL</div><div class="s-bar"><div class="s-fill" style="width:22%;background:var(--border)"></div></div></div>
+      <div class="s-val" style="color:var(--text3)">NORMAL</div>
+    </div>
+    <div class="sensor">
+      <div><div class="s-name">HY CREDIT SPREAD</div><div class="s-bar"><div class="s-fill" style="width:28%;background:var(--border)"></div></div></div>
+      <div class="s-val" style="color:var(--text3)">+2bp</div>
+    </div>
+    <div class="sensor">
+      <div><div class="s-name">DBMF FLUJO CTA</div><div class="s-bar"><div class="s-fill" style="width:18%;background:var(--border)"></div></div></div>
+      <div class="s-val" style="color:var(--text3)">NORMAL</div>
+    </div>
+    <div class="sensor">
+      <div><div class="s-name">OBV DIVERGENCIA XLK</div><div class="s-bar"><div class="s-fill" style="width:35%;background:var(--border)"></div></div></div>
+      <div class="s-val" style="color:var(--text3)">MONITOR</div>
+    </div>
+    <div class="sensor">
+      <div><div class="s-name">BOP BREADTH SECTOR</div><div class="s-bar"><div class="s-fill" style="width:25%;background:var(--border)"></div></div></div>
+      <div class="s-val" style="color:var(--text3)">NORMAL</div>
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 13px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:6px">PRINCIPIO DE CONFIRMACIÓN CRUZADA</div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.65">Un solo sensor disparando es <span style="color:var(--yellow)">ruido</span>. Igual que Google necesita múltiples teléfonos detectando el mismo movimiento para confirmar un sismo, Pegasus necesita <span style="color:var(--gold)">mínimo 3 sensores simultáneos</span> para generar alerta. A más sensores confirmando, mayor la magnitud y la confiabilidad de la señal.</div>
+  </div>
+</div>
+
+<!-- TAB: RICHTER SCALE -->
+<div class="tab-content" id="tab-richter">
+  <div class="richter">
+    <div class="richter-hdr">ESCALA DE MAGNITUD — PEGASUS EARLY WARNING</div>
+    <div class="richter-scale">
+      <div class="rs-row">
+        <div class="rs-dot" style="background:var(--green)"></div>
+        <div class="rs-label" style="color:var(--green)">NORMAL (1-2)</div>
+        <div class="rs-bar-wrap"><div class="rs-bar" style="width:15%;background:var(--green)"></div></div>
+        <div class="rs-desc">Mercado operando dentro de parámetros históricos. Sin acción requerida.</div>
+      </div>
+      <div class="rs-row">
+        <div class="rs-dot" style="background:var(--yellow)"></div>
+        <div class="rs-label" style="color:var(--yellow)">PRECAUCIÓN (3-4)</div>
+        <div class="rs-bar-wrap"><div class="rs-bar" style="width:35%;background:var(--yellow)"></div></div>
+        <div class="rs-desc">2-3 sensores activos. Anomalía menor detectada. Incrementa atención.</div>
+      </div>
+      <div class="rs-row">
+        <div class="rs-dot" style="background:var(--orange)"></div>
+        <div class="rs-label" style="color:var(--orange)">ALERTA (5-6)</div>
+        <div class="rs-bar-wrap"><div class="rs-bar" style="width:60%;background:var(--orange)"></div></div>
+        <div class="rs-desc">4-5 sensores activos. Rotación o divergencia inusual. Revisa posiciones.</div>
+      </div>
+      <div class="rs-row">
+        <div class="rs-dot" style="background:var(--red);animation:conf-blink 1s infinite"></div>
+        <div class="rs-label" style="color:var(--red)">CRÍTICO (7+)</div>
+        <div class="rs-bar-wrap"><div class="rs-bar" style="width:90%;background:var(--red)"></div></div>
+        <div class="rs-desc">6+ sensores simultáneos. Potencial evento de mercado significativo. Alerta push inmediata.</div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 13px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold-dim);letter-spacing:2px;margin-bottom:6px">¿CON QUÉ FRECUENCIA OCURREN LOS NIVELES?</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px">
+      <div style="text-align:center;background:var(--bg3);border-radius:2px;padding:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--green)">Diario</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">Normal</div></div>
+      <div style="text-align:center;background:var(--bg3);border-radius:2px;padding:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--yellow)">2-3/sem</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">Precaución</div></div>
+      <div style="text-align:center;background:var(--bg3);border-radius:2px;padding:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--orange)">1-2/sem</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">Alerta</div></div>
+      <div style="text-align:center;background:var(--bg3);border-radius:2px;padding:8px"><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--red)">Raro</div><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--text3)">Crítico</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text2);line-height:1.6">Esto responde tu pregunta: <span style="color:var(--gold)">el usuario no paga solo por el crítico</span> — el sistema genera valor todos los días con los niveles Normal y Precaución, que contextualizan cada sesión. El Crítico es la alarma sísmica que hace que no puedan vivir sin el producto.</div>
+  </div>
+</div>
+
+<!-- TAB: HISTORIAL -->
+<div class="tab-content" id="tab-history">
+  <div class="history-hdr">HISTORIAL DE ALERTAS — ÚLTIMAS 48H</div>
+  <div class="hist-item">
+    <div class="hist-dot" style="background:var(--orange)"></div>
+    <div class="hist-body">
+      <div class="hist-txt">⚠️ Rotación XLF→XLK acelerándose 2.8x — 4 sensores activos</div>
+      <div class="hist-meta">Nivel ALERTA · SPY, XLF, XLK · Duración: 18 min activa</div>
+    </div>
+    <div class="hist-time">Hoy 10:42</div>
+  </div>
+  <div class="hist-item">
+    <div class="hist-dot" style="background:var(--yellow)"></div>
+    <div class="hist-body">
+      <div class="hist-txt">⚡ VIX spike intraday +1.8pts en apertura — 3 sensores activos</div>
+      <div class="hist-meta">Nivel PRECAUCIÓN · VIX, Put/Call, Spearman · Resuelta en 35 min</div>
+    </div>
+    <div class="hist-time">Hoy 09:35</div>
+  </div>
+  <div class="hist-item">
+    <div class="hist-dot" style="background:var(--green)"></div>
+    <div class="hist-body">
+      <div class="hist-txt">✅ Mercado normalizado tras alerta de apertura</div>
+      <div class="hist-meta">Nivel NORMAL · Todos los sensores en rango histórico</div>
+    </div>
+    <div class="hist-time">Hoy 10:10</div>
+  </div>
+  <div class="hist-item">
+    <div class="hist-dot" style="background:var(--red)"></div>
+    <div class="hist-body">
+      <div class="hist-txt">🚨 CRÍTICO — BOP + OBV + Spearman + VIX + Put/Call + DBMF simultáneos</div>
+      <div class="hist-meta">Nivel CRÍTICO · 6 sensores · SPY cayó -1.8% en las 2h siguientes ✓</div>
+    </div>
+    <div class="hist-time">Ayer 14:22</div>
+  </div>
+  <div class="hist-item">
+    <div class="hist-dot" style="background:var(--yellow)"></div>
+    <div class="hist-body">
+      <div class="hist-txt">⚡ Divergencia OBV/precio en NQ — breadth deteriorándose</div>
+      <div class="hist-meta">Nivel PRECAUCIÓN · 2 sensores · NQ corrigió -0.8% al cierre ✓</div>
+    </div>
+    <div class="hist-time">Ayer 11:15</div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 13px;margin-top:8px">
+    <div style="font-size:11px;color:var(--text2);line-height:1.65">El historial muestra el <span style="color:var(--gold)">track record real del sistema</span> — cuándo alertó, qué nivel, y qué pasó después. Esto es lo que convierte un usuario escéptico en uno que dice <span style="color:var(--gold)">"no puedo vivir sin esto"</span> — ver que la alerta de ayer Crítico fue seguida por -1.8% dos horas después.</div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ── SEISMOGRAPH ───────────────────────────────────────────────
+let seismicData = [];
+let animFrame;
+let currentLevel = 2;
+
+function initSeismic(){
+  const cv = document.getElementById('seismic');
+  const W = cv.parentElement.offsetWidth || 600;
+  cv.width = W; cv.height = 80;
+  seismicData = Array(W).fill(0);
+  drawSeismic();
+}
+
+function drawSeismic(){
+  const cv = document.getElementById('seismic');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height, mid = H/2;
+  ctx.clearRect(0,0,W,H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(212,175,55,0.06)';
+  ctx.lineWidth = 1;
+  [H*0.25, H*0.75].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()});
+
+  // Amplitude based on level
+  const amps = [2, 6, 14, 28];
+  const amp = amps[currentLevel];
+  const noise = amp * 0.3;
+
+  // Shift left and add new point
+  seismicData.shift();
+  const spike = Math.random() < 0.04 ? (Math.random()-.5)*amp*2.5 : 0;
+  const newVal = (Math.random()-.5)*amp + spike + (Math.random()-.5)*noise;
+  seismicData.push(newVal);
+
+  // Color based on level
+  const colors = ['#00C97A','#FFD700','#FF8C00','#FF4455'];
+  const col = colors[currentLevel];
+
+  // Draw waveform
+  ctx.beginPath();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = col;
+  ctx.shadowBlur = currentLevel > 1 ? 4 : 0;
+  seismicData.forEach((v,i)=>{
+    const x=i, y=mid+v*(mid*0.85/Math.max(amp,1));
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // Current position dot
+  const lastY = mid + seismicData[seismicData.length-1]*(mid*0.85/Math.max(amp,1));
+  ctx.beginPath();ctx.arc(W-2,lastY,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+
+  animFrame = requestAnimationFrame(drawSeismic);
+}
+
+// ── LEVEL CONTROL ─────────────────────────────────────────────
+const LEVELS = [
+  {
+    cls:'level-0', iconCls:'eq-level-0', icon:'✅', title:'SISTEMA NORMAL',
+    body:'Todos los sensores dentro de parámetros históricos. El mercado opera con normalidad. Sin anomalías detectadas en flujo de órdenes, volumen, VIX ni correlaciones sectoriales.',
+    confs:0, gaugeVal:'2.1', gaugeLabel:'NORMAL', gaugeCls:'gc-normal', confirmColor:'var(--green)',
+    confirmTexts:['Sin anomalías','Sin anomalías','Sin anomalías','Sin anomalías','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar'],
+    action:'El mercado está en modo normal. Consulta tus señales habituales de Intraday y Swing en las otras pestañas. El Early Warning seguirá monitoreando en segundo plano.'
+  },
+  {
+    cls:'level-1', iconCls:'eq-level-1', icon:'⚡', title:'PRECAUCIÓN — ANOMALÍA MENOR',
+    body:'El <b>VIX</b> subió 0.8 puntos en la última hora y el <b>Put/Call ratio</b> se elevó a 1.12. Dos sensores activos — no suficiente para alerta formal, pero suficiente para incrementar la atención. Mercado mostrando primeras señales de nerviosismo.',
+    confs:2, gaugeVal:'3.8', gaugeLabel:'PRECAUCIÓN', gaugeCls:'gc-caution', confirmColor:'var(--yellow)',
+    confirmTexts:['VIX +0.8pts','Put/Call 1.12','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar'],
+    action:'2 sensores activos — por debajo del umbral de alerta (3 mínimos). Observa el mercado con más atención. Si un tercer sensor se activa en los próximos 15 minutos, el sistema escalará a ALERTA.'
+  },
+  {
+    cls:'level-2', iconCls:'eq-level-2', icon:'⚠️', title:'ANOMALÍA DETECTADA — NIVEL MODERADO',
+    body:'Rotación <b>XLF → XLK</b> acelerándose a <b>2.8x</b> sobre lo normal. El volumen en financieras subió <b>+180%</b> vs promedio de 20 días. El <b>VIX</b> subió 1.2 puntos en 25 minutos y el <b>Put/Call ratio</b> trepó a 1.24. <b>Spearman del SPY cayó de 62 a 31</b> en esta sesión.',
+    confs:4, gaugeVal:'6.2', gaugeLabel:'ALERTA ACTIVA', gaugeCls:'gc-alert', confirmColor:'var(--orange)',
+    confirmTexts:['Volumen XLF +180%','VIX +1.2pts','Put/Call 1.24','Spearman SPY 31↓','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar','Sin confirmar'],
+    action:'4 de 9 sensores activos. Rotación sectorial inusual en curso. El Dow Jones puede sentir presión mientras el Nasdaq recibe flujo. Vigila el nivel $702.96 en SPY como soporte clave.'
+  },
+  {
+    cls:'level-3', iconCls:'eq-level-3', icon:'🚨', title:'TERREMOTO DE MERCADO — NIVEL CRÍTICO',
+    body:'<b>6 sensores simultáneos activos</b> — umbral de evento mayor alcanzado. Volumen anómalo <b>+340%</b> en XLF con OBV bajista confirmado. VIX disparado <b>+3.2pts</b> en 30 minutos. Put/Call en <b>1.48</b> — máximo del mes. Spearman del SPY <b>colapsó a 8</b>. DBMF (CTA flow) iniciando reducción de exposición. Divergencia crítica entre precio y flujo real.',
+    confs:6, gaugeVal:'8.7', gaugeLabel:'TERREMOTO', gaugeCls:'gc-critical', confirmColor:'var(--red)',
+    confirmTexts:['Volumen +340% XLF','VIX +3.2pts','Put/Call 1.48','Spearman SPY 8↓','DBMF reduciendo','HY Spread +18bp','COT shift abrupto','Sin confirmar','Sin confirmar'],
+    action:'🚨 ALERTA MÁXIMA — 6 sensores confirmados. Históricamente, cuando el sistema alcanza este nivel, se producen movimientos de ±1.5% o más en las próximas 1-3 horas. Revisa todas tus posiciones abiertas AHORA.'
+  }
+];
+
+function setLevel(n){
+  currentLevel = n;
+  const L = LEVELS[n];
+  const eq = document.getElementById('eq-main');
+  eq.className = 'eq-alert ' + L.cls;
+  eq.querySelector('.eq-title').className = 'eq-title ' + L.iconCls;
+  eq.querySelector('.eq-icon').textContent = L.icon;
+  eq.querySelector('.eq-title').textContent = L.title;
+  eq.querySelector('.eq-body').innerHTML = L.body;
+  eq.querySelector('.action-items').innerHTML = `<div class="action-item"><span class="action-bullet" style="color:${L.confirmColor}">→</span><span>${L.action}</span></div>`;
+
+  // Update confirmations
+  const confs = eq.querySelectorAll('.conf');
+  confs.forEach((c,i)=>{
+    const dot = c.querySelector('.conf-dot');
+    const txt = c.querySelector('.conf-txt');
+    if(i < L.confs){
+      dot.style.background = L.confirmColor;
+      dot.classList.add('active');
+      txt.style.color = L.confirmColor;
+      txt.textContent = L.confirmTexts[i].replace('<br>','\n');
+    } else {
+      dot.style.background = 'var(--border)';
+      dot.classList.remove('active');
+      txt.style.color = 'var(--text3)';
+      txt.textContent = 'Sin confirmar';
+    }
+  });
+
+  // Update gauges
+  const gCards = document.querySelectorAll('.gauge-card');
+  gCards[0].className = 'gauge-card ' + L.gaugeCls;
+  gCards[0].querySelector('.gc-val').textContent = L.gaugeVal;
+  gCards[0].querySelector('.gc-sub').textContent = L.gaugeLabel;
+  gCards[1].className = 'gauge-card ' + L.gaugeCls;
+  gCards[1].querySelector('.gc-val').textContent = L.confs + '/9';
+}
+
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function tick(){
+  const s = new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/New_York'});
+  document.getElementById('clk2').textContent = s;
+}
+
+setTimeout(initSeismic, 100);
+tick(); setInterval(tick,1000);
+</script>

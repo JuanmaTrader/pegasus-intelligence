@@ -146,27 +146,36 @@ section{padding:80px 24px;max-width:1100px;margin:0 auto}
 .ac-features{font-size:11px;color:var(--text-dim);line-height:1.7}
 
 /* ── PRICING ── */
-.pricing-wrap{display:flex;justify-content:center;margin-top:48px}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:48px}
+@media(max-width:900px){.pricing-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.pricing-grid{grid-template-columns:1fr}}
 .price-card{
   background:var(--bg2);border:1px solid var(--border);
-  border-top:3px solid var(--gold);border-radius:3px;
-  padding:38px 44px;text-align:center;max-width:440px;width:100%;
-  position:relative;overflow:hidden;
+  border-radius:3px;padding:24px 20px;
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
 }
-.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:100%;background:linear-gradient(180deg,rgba(212,175,55,.04) 0%,transparent 40%);pointer-events:none}
-.price-badge{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px}
-.price-amount{font-family:var(--mono);font-size:52px;font-weight:600;color:var(--text-bright);line-height:1}
-.price-period{font-family:var(--mono);font-size:12px;color:var(--gold-dim);margin-bottom:28px;margin-top:4px}
-.price-features{text-align:left;margin-bottom:30px;display:flex;flex-direction:column;gap:10px}
-.pf{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text)}
-.pf-dot{color:var(--green);flex-shrink:0;margin-top:2px}
+.price-card.featured{border-color:var(--gold);background:var(--bg3)}
+.price-card.featured::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.price-tier{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:10px}
+.price-card.featured .price-tier{color:var(--gold)}
+.price-amount{font-family:var(--mono);font-size:36px;font-weight:600;color:var(--text-bright);line-height:1}
+.price-period{font-family:var(--mono);font-size:10px;color:var(--gold-dim);margin-bottom:18px;margin-top:4px}
+.price-features{flex:1;display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.pf{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-dim)}
+.pf.locked{color:var(--gold-ghost)}
+.pf-dot{color:var(--green);flex-shrink:0;margin-top:1px}
+.pf-lock{color:var(--gold-dim);flex-shrink:0;margin-top:1px}
 .price-cta{
-  width:100%;padding:15px;background:var(--gold);color:#080600;
-  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:2px;
+  width:100%;padding:10px;background:var(--gold);color:#080600;
+  font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:2px;
   border-radius:2px;border:none;cursor:pointer;transition:background .15s;text-transform:uppercase;
 }
 .price-cta:hover{background:var(--gold2)}
-.price-note{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);margin-top:14px;line-height:1.6}
+.price-cta.outline{
+  background:transparent;color:var(--gold);border:1px solid rgba(212,175,55,.3);
+}
+.price-cta.outline:hover{border-color:var(--gold);background:rgba(212,175,55,.07)}
+.price-note{font-family:var(--mono);font-size:9px;color:var(--gold-ghost);margin-top:10px;line-height:1.6;text-align:center}
 
 /* ── FAQ ── */
 .faq-list{margin-top:40px;display:flex;flex-direction:column;gap:2px}
@@ -219,10 +228,10 @@ footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
     con el mismo modelo de scoring que usan los fondos. En español. Sin ruido.
   </p>
   <div class="hero-btns">
-    <a href="#precios" class="btn-primary">Suscribirse por $9.99 / mes →</a>
+    <a href="#precios" class="btn-primary">Ver planes desde $19.99 →</a>
     <a href="dashboard.html" class="btn-secondary">Ver el dashboard</a>
   </div>
-  <div class="hero-price">Desde <strong>$9.99</strong> / mes · Cancela cuando quieras</div>
+  <div class="hero-price">FREE disponible · Planes desde <strong>$19.99</strong> / mes</div>
 
   <!-- Live preview strip -->
   <div class="preview-strip" id="preview-strip">
@@ -422,25 +431,78 @@ footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
   <div class="section-title">Sin sorpresas</div>
   <p class="section-sub">Un plan. Todo incluido. Cancela cuando quieras.</p>
 
-  <div class="pricing-wrap">
+  <div class="pricing-grid">
+
+    <!-- FREE -->
     <div class="price-card">
-      <div class="price-badge">SUSCRIPCIÓN MENSUAL</div>
-      <div class="price-amount">$9.99</div>
-      <div class="price-period">USD · por mes · cancela cuando quieras</div>
+      <div class="price-tier">Free</div>
+      <div class="price-amount">$0</div>
+      <div class="price-period">sin registro</div>
       <div class="price-features">
-        <div class="pf"><span class="pf-dot">✓</span>6 activos analizados en tiempo real</div>
-        <div class="pf"><span class="pf-dot">✓</span>Señal + score + zonas de entrada/stop/TP</div>
-        <div class="pf"><span class="pf-dot">✓</span>R/R calculado · Calidad del setup A/B/C</div>
-        <div class="pf"><span class="pf-dot">✓</span>Impacto macro por activo (VIX, DXY, yields)</div>
-        <div class="pf"><span class="pf-dot">✓</span>Rango esperado del día (ATR)</div>
-        <div class="pf"><span class="pf-dot">✓</span>Factor de invalidación + qué monitorear hoy</div>
-        <div class="pf"><span class="pf-dot">✓</span>Análisis swing 3–10 días</div>
-        <div class="pf"><span class="pf-dot">✓</span>Actualización automática cada 15 minutos</div>
-        <div class="pf"><span class="pf-dot">✓</span>Acceso 24/7 desde cualquier dispositivo</div>
+        <div class="pf"><span class="pf-dot">✓</span>2 activos (NQ + Oro)</div>
+        <div class="pf"><span class="pf-dot">✓</span>Régimen del día (nombre)</div>
+        <div class="pf"><span class="pf-dot">✓</span>1 señal sin score</div>
+        <div class="pf locked"><span class="pf-lock">🔒</span>Briefing IA</div>
+        <div class="pf locked"><span class="pf-lock">🔒</span>Score + zonas</div>
       </div>
-      <button class="price-cta" onclick="alert('Próximamente — activando pago seguro vía Stripe')">Suscribirse ahora →</button>
-      <div class="price-note">Pago seguro vía Stripe · SSL · Sin permanencia</div>
+      <button class="price-cta outline" onclick="window.location='dashboard.html'">Ver demo →</button>
     </div>
+
+    <!-- BÁSICO -->
+    <div class="price-card">
+      <div class="price-tier">Básico</div>
+      <div class="price-amount">$19<span style="font-size:18px">.99</span></div>
+      <div class="price-period">USD / mes</div>
+      <div class="price-features">
+        <div class="pf"><span class="pf-dot">✓</span>6 activos completos</div>
+        <div class="pf"><span class="pf-dot">✓</span>Señales + scores + contexto</div>
+        <div class="pf"><span class="pf-dot">✓</span>Régimen + money flow</div>
+        <div class="pf"><span class="pf-dot">✓</span>Briefing IA diario</div>
+        <div class="pf"><span class="pf-dot">✓</span>Calendario económico</div>
+        <div class="pf"><span class="pf-dot">✓</span>Timeframe selector</div>
+        <div class="pf locked"><span class="pf-lock">🔒</span>Convergence Score</div>
+        <div class="pf locked"><span class="pf-lock">🔒</span>Capa de opciones (IV)</div>
+      </div>
+      <button class="price-cta outline" onclick="alert('Próximamente — pagos vía Stripe')">Suscribirse →</button>
+      <div class="price-note">Cancela cuando quieras</div>
+    </div>
+
+    <!-- PRO (destacado) -->
+    <div class="price-card featured">
+      <div class="price-tier">Pro · Más popular</div>
+      <div class="price-amount">$49<span style="font-size:18px">.99</span></div>
+      <div class="price-period">USD / mes</div>
+      <div class="price-features">
+        <div class="pf"><span class="pf-dot">✓</span>Todo lo de Básico</div>
+        <div class="pf"><span class="pf-dot">✓</span>Convergence Score (3 capas)</div>
+        <div class="pf"><span class="pf-dot">✓</span>IV Rank · movimiento esperado</div>
+        <div class="pf"><span class="pf-dot">✓</span>Signal Change Log</div>
+        <div class="pf"><span class="pf-dot">✓</span>Proyecciones 1–3 meses</div>
+        <div class="pf"><span class="pf-dot">✓</span>Alertas cambio de señal</div>
+        <div class="pf"><span class="pf-dot">✓</span>Modo inversor simplificado</div>
+        <div class="pf locked"><span class="pf-lock">🔒</span>API access</div>
+      </div>
+      <button class="price-cta" onclick="alert('Próximamente — pagos vía Stripe')">Suscribirse →</button>
+      <div class="price-note">Pago seguro vía Stripe · SSL</div>
+    </div>
+
+    <!-- ELITE -->
+    <div class="price-card">
+      <div class="price-tier">Elite</div>
+      <div class="price-amount">$99<span style="font-size:18px">.99</span></div>
+      <div class="price-period">USD / mes</div>
+      <div class="price-features">
+        <div class="pf"><span class="pf-dot">✓</span>Todo lo de Pro</div>
+        <div class="pf"><span class="pf-dot">✓</span>Paradox Detector automático</div>
+        <div class="pf"><span class="pf-dot">✓</span>Cascade Tracker (NVDA→NQ)</div>
+        <div class="pf"><span class="pf-dot">✓</span>Screener: cualquier ticker</div>
+        <div class="pf"><span class="pf-dot">✓</span>API key + webhooks</div>
+        <div class="pf"><span class="pf-dot">✓</span>Sesión mensual análisis</div>
+      </div>
+      <button class="price-cta outline" onclick="alert('Acceso por invitación · Contáctanos')">Solicitar acceso →</button>
+      <div class="price-note">Acceso por invitación</div>
+    </div>
+
   </div>
 </section>
 

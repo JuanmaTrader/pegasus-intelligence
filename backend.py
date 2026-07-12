@@ -53,6 +53,52 @@ MACRO_TICKERS = {
 }
 
 # ─────────────────────────────────────────────────────────────
+# CALENDARIO DE EVENTOS — actualizar mensualmente
+# ─────────────────────────────────────────────────────────────
+EVENTS_CALENDAR = [
+    {
+        "id": "cpi", "name": "CPI (Inflación USA)", "impact": "EXTREMO",
+        "schedule": "Día 10-15 de cada mes, 8:30am ET",
+        "assets": ["nq", "spy", "dow", "dxy", "gold"],
+        "warning": "Alta volatilidad esperada. NQ puede moverse ±1.5–2.5% en la primera hora.",
+        "paradox": "Dato MUY BUENO (CPI bajo) → NQ sube. Dato MALO (CPI alto) → NQ cae porque la Fed no baja tasas.",
+        "days_away": None
+    },
+    {
+        "id": "nfp", "name": "NFP (Nóminas no agrícolas)", "impact": "EXTREMO",
+        "schedule": "Primer viernes de cada mes, 8:30am ET",
+        "assets": ["nq", "spy", "dxy"],
+        "warning": "Paradoja frecuente: dato MUY BUENO puede causar caída en tech (Fed no baja tasas).",
+        "paradox": "NFP fuerte → Fed hawkish → yields suben → múltiplos tech se comprimen → NQ cae.",
+        "days_away": None
+    },
+    {
+        "id": "fomc", "name": "Decisión FOMC (Fed)", "impact": "EXTREMO",
+        "schedule": "Cada 6-8 semanas, 2:00pm ET",
+        "assets": ["nq", "spy", "dow", "dxy", "gold", "oil"],
+        "warning": "Volatilidad extrema. Reducir o cerrar posiciones antes del anuncio.",
+        "paradox": "Hawkish (tasas altas) → DXY sube, NQ cae. Dovish (tasas bajas) → DXY cae, NQ sube.",
+        "days_away": None
+    },
+    {
+        "id": "ppi", "name": "PPI (Precios productor)", "impact": "ALTO",
+        "schedule": "Día 10-14 de cada mes, 8:30am ET",
+        "assets": ["nq", "spy"],
+        "warning": "Precursor del CPI. Mueve mercados si sorprende significativamente.",
+        "paradox": "",
+        "days_away": None
+    },
+    {
+        "id": "eia", "name": "Inventarios EIA (Petróleo)", "impact": "ALTO",
+        "schedule": "Miércoles semanal, 10:30am ET",
+        "assets": ["oil"],
+        "warning": "Alta volatilidad en petróleo. Movimiento típico ±2–4% en minutos.",
+        "paradox": "Inventarios ALTOS → precio cae (exceso oferta). Inventarios BAJOS → precio sube.",
+        "days_away": None
+    },
+]
+
+# ─────────────────────────────────────────────────────────────
 # LOGGING
 # ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -71,7 +117,10 @@ STATE = {
     "macro": {},
     "briefing": "",
     "status": "INICIANDO",
-    "errors": []
+    "errors": [],
+    "regime": {},
+    "signal_history": {},   # {asset_id: [{signal, score, time, price, changed}]}
+    "events_today": [],     # eventos próximos relevantes
 }
 STATE_LOCK = threading.Lock()
 
@@ -297,6 +346,151 @@ def compute_score(price_data: dict, macro: dict, asset_id: str) -> dict:
     return {"score": total, "label": label, "details": details}
 
 # ─────────────────────────────────────────────────────────────
+# 5b. RÉGIMEN — detecta el tipo de mercado hoy
+# ─────────────────────────────────────────────────────────────
+def detect_regime(macro: dict, assets_data: dict) -> dict:
+    vix      = macro.get("VIX",   {}).get("value", 20)
+    dxy_chg  = macro.get("DXY",   {}).get("chg_pct", 0)
+    us10y    = macro.get("US10Y", {}).get("value", 4.5)
+    us10y_chg= macro.get("US10Y", {}).get("chg_pct", 0)
+    gold_chg = macro.get("GOLD",  {}).get("chg_pct", 0)
+
+    nq_sc  = assets_data.get("nq",  {}).get("score_data", {}).get("score", 0)
+    spy_sc = assets_data.get("spy", {}).get("score_data", {}).get("score", 0)
+    gold_sc= assets_data.get("gold",{}).get("score_data", {}).get("score", 0)
+
+    if vix > 30:
+        return {
+            "regime": "MIEDO EXTREMO", "color": "red", "emoji": "🔴",
+            "desc": "Pánico en el mercado. Volatilidad extrema — evitar nuevas posiciones. El dinero huye hacia bonos y dólar.",
+            "flow_in":  ["Bonos del Tesoro", "Dólar (DXY)", "Oro"],
+            "flow_out": ["Acciones", "Futuros de índices", "Commodities", "Cryptos"],
+            "advice": "Reducir riesgo. No operar contra el pánico."
+        }
+    elif vix > 22 or (dxy_chg > 0.4 and nq_sc < -10):
+        return {
+            "regime": "RISK-OFF", "color": "red", "emoji": "🔴",
+            "desc": "El dinero huye del riesgo. Dólar y bonos preferidos sobre acciones. Tech bajo presión.",
+            "flow_in":  ["Dólar (DXY)", "Oro", "Bonos", "Utilities"],
+            "flow_out": ["Nasdaq / Tech", "Growth stocks", "Commodities cíclicos"],
+            "advice": "Setups cortos en tech. Largo en dólar u oro si hay confirmación técnica."
+        }
+    elif vix < 14 and nq_sc > 25 and spy_sc > 15:
+        return {
+            "regime": "RISK-ON", "color": "green", "emoji": "🟢",
+            "desc": "Apetito por el riesgo elevado. El dinero busca retorno en equities y activos de crecimiento.",
+            "flow_in":  ["Nasdaq / Tech", "S&P 500", "Commodities cíclicos", "Small caps"],
+            "flow_out": ["Dólar", "Bonos", "Activos defensivos"],
+            "advice": "Sesgo largo en índices y tech. Stops amplios por calma del VIX."
+        }
+    elif us10y_chg > 0.06 and nq_sc < 0:
+        return {
+            "regime": "PRESIÓN INFLACIONARIA", "color": "orange", "emoji": "🟡",
+            "desc": "Yields subiendo — los múltiplos de valuación tech se comprimen. Dinero rotando hacia valor y commodities.",
+            "flow_in":  ["Energía", "Materiales", "Financieros", "Commodities"],
+            "flow_out": ["Tech de alto crecimiento", "Growth", "Real estate"],
+            "advice": "Evitar tech caro. Considerar energía y materiales como cobertura."
+        }
+    elif vix < 17 and abs(dxy_chg) < 0.25 and abs(us10y_chg) < 0.04:
+        return {
+            "regime": "GOLDILOCKS", "color": "gold", "emoji": "🟡",
+            "desc": "Condiciones ideales: VIX bajo, dólar estable, yields sin presión. El mercado puede subir tranquilo.",
+            "flow_in":  ["Mercado en general equilibrado", "Tech + valor simultáneos"],
+            "flow_out": ["Sin salidas significativas — búsqueda de retorno generalizada"],
+            "advice": "Setups de mayor calidad disponibles. Momento para construir posiciones."
+        }
+    else:
+        return {
+            "regime": "TRANSICIÓN", "color": "neu", "emoji": "⚪",
+            "desc": "Mercado buscando dirección. Señales mixtas entre sectores. Mayor selectividad recomendada.",
+            "flow_in":  ["Sectores defensivos", "Activos con momentum propio"],
+            "flow_out": ["Alto riesgo especulativo sin catalizador claro"],
+            "advice": "Esperar confirmación. Reducir tamaño de posición en la incertidumbre."
+        }
+
+# ─────────────────────────────────────────────────────────────
+# 5c. CONVERGENCIA — cuántas capas apuntan en la misma dirección
+# ─────────────────────────────────────────────────────────────
+def compute_convergence(score_details: dict, total_score: int) -> dict:
+    rsi_c   = score_details.get("RSI",     {}).get("contribution", 0)
+    ema_c   = score_details.get("EMA",     {}).get("contribution", 0)
+    vol_c   = score_details.get("Volumen", {}).get("contribution", 0)
+    macro_c = score_details.get("Macro",   {}).get("contribution", 0)
+    mom_c   = score_details.get("Momentum",{}).get("contribution", 0)
+
+    tecnico  = rsi_c + ema_c + vol_c
+    macro_s  = macro_c
+    momentum = mom_c
+
+    def direction(val, threshold=7):
+        if val > threshold:  return 1
+        if val < -threshold: return -1
+        return 0
+
+    layers = {
+        "Técnico":  direction(tecnico, 8),
+        "Macro":    direction(macro_s, 7),
+        "Momentum": direction(momentum, 5),
+    }
+
+    alcistas = sum(1 for v in layers.values() if v == 1)
+    bajistas = sum(1 for v in layers.values() if v == -1)
+
+    if alcistas == 3:
+        return {"level": 3, "dir": "LARGO", "label": "CONVERGENCIA TOTAL",  "color": "up",  "layers": layers}
+    if alcistas == 2:
+        return {"level": 2, "dir": "LARGO", "label": "SESGO ALCISTA",       "color": "up",  "layers": layers}
+    if bajistas == 3:
+        return {"level": 3, "dir": "CORTO", "label": "CONVERGENCIA TOTAL",  "color": "dn",  "layers": layers}
+    if bajistas == 2:
+        return {"level": 2, "dir": "CORTO", "label": "SESGO BAJISTA",       "color": "dn",  "layers": layers}
+    return     {"level": 0, "dir": "MIXTO", "label": "SEÑALES MIXTAS",      "color": "neu", "layers": layers}
+
+# ─────────────────────────────────────────────────────────────
+# 5d. IV RANK PROXY — volatilidad implícita relativa
+# ─────────────────────────────────────────────────────────────
+def compute_iv_rank_proxy(price_data: dict, asset_id: str) -> dict:
+    atr   = price_data.get("atr", 0)
+    price = price_data.get("price", 1)
+    if not price:
+        return {"rank": 50, "label": "MODERADA", "recommendation": "neutral", "atr_pct": 0}
+
+    atr_pct = round((atr / price) * 100, 2)
+
+    # Thresholds calibrated per asset type
+    thresholds = {
+        "gold":  (0.8,  1.5),
+        "oil":   (1.2,  2.2),
+        "nq":    (0.6,  1.2),
+        "spy":   (0.5,  1.0),
+        "dow":   (0.5,  1.0),
+        "dxy":   (0.3,  0.6),
+    }
+    low_t, high_t = thresholds.get(asset_id, (0.7, 1.5))
+
+    if atr_pct > high_t:
+        rank = min(95, int(70 + (atr_pct - high_t) / high_t * 100))
+        label = "ALTA"
+        rec   = "Volatilidad elevada — opciones caras. Mejor VENDER premium que comprarlo."
+        rec_short = "VENDER premium"
+    elif atr_pct < low_t:
+        rank = max(5, int(30 - (low_t - atr_pct) / low_t * 100))
+        label = "BAJA"
+        rec   = "Volatilidad comprimida — opciones baratas. Momento para COMPRAR opciones antes de un catalizador."
+        rec_short = "COMPRAR opciones"
+    else:
+        rank = 50
+        label = "MODERADA"
+        rec   = "Volatilidad normal. Condiciones equilibradas para compradores y vendedores de opciones."
+        rec_short = "neutral"
+
+    return {
+        "rank": rank, "label": label,
+        "recommendation": rec, "rec_short": rec_short,
+        "atr_pct": atr_pct
+    }
+
+# ─────────────────────────────────────────────────────────────
 # 5. CLAUDE API — análisis narrativo
 # ─────────────────────────────────────────────────────────────
 def analyze_with_claude(asset_name: str, price_data: dict,
@@ -433,48 +627,54 @@ def _fallback_analysis(asset_name: str, pd_: dict, score_data: dict) -> dict:
 # ─────────────────────────────────────────────────────────────
 # 6. BRIEFING DIARIO — Claude genera el resumen del día
 # ─────────────────────────────────────────────────────────────
-def generate_briefing(assets_data: dict, macro: dict) -> str:
-    """Genera el briefing del día en español."""
+def generate_briefing(assets_data: dict, macro: dict, regime: dict = None) -> str:
+    """Genera el briefing del día en español, consciente del régimen."""
+    vix     = macro.get("VIX",  {}).get("value", "—")
+    dxy     = macro.get("DXY",  {}).get("value", "—")
+    dxy_chg = macro.get("DXY",  {}).get("chg_pct", 0)
+    us10y   = macro.get("US10Y",{}).get("value", "—")
+    reg_name= (regime or {}).get("regime", "DESCONOCIDO")
+
     if ANTHROPIC_API_KEY == "TU_API_KEY_AQUI":
-        vix = macro.get("VIX", {}).get("value", "—")
-        dxy = macro.get("DXY", {}).get("value", "—")
-        return (f"VIX en {vix} y DXY en {dxy}. "
+        return (f"Régimen: {reg_name}. VIX {vix}, DXY {dxy} ({dxy_chg:+.2f}% hoy), US10Y {us10y}%. "
                 f"Configura tu API key de Anthropic para el briefing narrativo completo.")
 
     try:
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-        signals = {aid: f"{d.get('score_data',{}).get('label','—')} ({d.get('score_data',{}).get('score',0)})"
+        signals = {aid: f"{d.get('score_data',{}).get('label','—')} ({d.get('score_data',{}).get('score',0):+d})"
                    for aid, d in assets_data.items()}
-        vix  = macro.get("VIX",  {}).get("value", "—")
-        dxy  = macro.get("DXY",  {}).get("value", "—")
-        dxy_chg = macro.get("DXY",  {}).get("chg_pct", 0)
-        us10y = macro.get("US10Y",{}).get("value", "—")
+
+        flow_in  = ", ".join((regime or {}).get("flow_in",  []))
+        flow_out = ", ".join((regime or {}).get("flow_out", []))
 
         prompt = f"""Eres el analista jefe de Pegasus Trading Tools. Genera el briefing del día.
 
-Contexto macro actual:
+RÉGIMEN ACTUAL: {reg_name}
+Flujo de dinero HOY → Entra en: {flow_in} | Sale de: {flow_out}
+
+Contexto macro:
 - VIX: {vix}
 - DXY: {dxy} ({dxy_chg:+.2f}% hoy)
 - US10Y: {us10y}%
 
-Señales del modelo por activo:
+Señales del modelo:
 {json.dumps(signals, ensure_ascii=False, indent=2)}
 
-Escribe UN párrafo de máximo 2 frases en español. Directo, claro, sin jerga. 
-Menciona qué activo lidera en cada dirección y por qué en términos simples.
-No uses comillas. No uses markdown. Solo el párrafo."""
+Escribe 2-3 frases en español simple. Primera frase: explica el régimen y la causa principal.
+Segunda frase: menciona el activo que más se beneficia y el que más sufre, y por qué en términos simples.
+Sin jerga financiera. Sin markdown. Solo el texto corrido."""
 
         msg = client.messages.create(
             model="claude-opus-4-6",
-            max_tokens=200,
+            max_tokens=250,
             messages=[{"role": "user", "content": prompt}]
         )
         return msg.content[0].text.strip()
 
     except Exception as e:
         log.error(f"Briefing error: {e}")
-        return "Análisis de mercado en proceso. Configura tu API key para el briefing completo."
+        return f"Régimen: {reg_name}. Análisis narrativo en proceso."
 
 # ─────────────────────────────────────────────────────────────
 # 7. CICLO PRINCIPAL DE ACTUALIZACIÓN
@@ -523,35 +723,70 @@ def update_all():
         else:
             price_fmt = f"{price:.4f}"
 
+        # Convergencia y IV rank proxy
+        convergence = compute_convergence(score_data.get("details", {}), score_data["score"])
+        iv_rank     = compute_iv_rank_proxy(price_data, asset_id)
+
         assets_data[asset_id] = {
-            "id":        asset_id,
-            "name":      asset_cfg["name"],
-            "ticker":    asset_cfg["label"],
-            "price":     price_fmt,
-            "price_raw": price,
-            "chg":       f"{chg:+.2f}%",
-            "dir":       direction,
-            "score_data": score_data,
-            "price_data": price_data,
-            "ai":         ai_analysis,
-            "headlines":  headlines,
+            "id":          asset_id,
+            "name":        asset_cfg["name"],
+            "ticker":      asset_cfg["label"],
+            "price":       price_fmt,
+            "price_raw":   price,
+            "chg":         f"{chg:+.2f}%",
+            "dir":         direction,
+            "score_data":  score_data,
+            "price_data":  price_data,
+            "ai":          ai_analysis,
+            "headlines":   headlines,
+            "convergence": convergence,
+            "iv_rank":     iv_rank,
         }
 
         time.sleep(0.5)  # Respetar rate limits
 
-    # Briefing del día
+    # Régimen del mercado
+    log.info("Detectando régimen del mercado...")
+    regime = detect_regime(macro, assets_data)
+
+    # Historial de señales — detectar cambios
+    with STATE_LOCK:
+        prev_history = STATE["signal_history"].copy()
+
+    for asset_id, asset_data in assets_data.items():
+        new_signal = asset_data["score_data"]["label"]
+        new_score  = asset_data["score_data"]["score"]
+        history    = prev_history.get(asset_id, [])
+
+        changed = not history or history[-1]["signal"] != new_signal
+        entry = {
+            "signal":  new_signal,
+            "score":   new_score,
+            "time":    datetime.datetime.now().isoformat(),
+            "price":   asset_data.get("price", "—"),
+            "changed": changed,
+        }
+        history.append(entry)
+        prev_history[asset_id] = history[-30:]  # max 30 entradas por activo
+
+        if changed:
+            log.info(f"  ⚡ CAMBIO SEÑAL {asset_id}: → {new_signal} ({new_score:+d})")
+
+    # Briefing del día (ahora con régimen)
     log.info("Generando briefing del día...")
-    briefing = generate_briefing(assets_data, macro)
+    briefing = generate_briefing(assets_data, macro, regime)
 
     # Actualizar estado global
     with STATE_LOCK:
-        STATE["assets"]      = assets_data
-        STATE["macro"]       = macro
-        STATE["briefing"]    = briefing
-        STATE["last_update"] = datetime.datetime.now().isoformat()
-        STATE["status"]      = "ACTIVO"
+        STATE["assets"]         = assets_data
+        STATE["macro"]          = macro
+        STATE["briefing"]       = briefing
+        STATE["regime"]         = regime
+        STATE["signal_history"] = prev_history
+        STATE["last_update"]    = datetime.datetime.now().isoformat()
+        STATE["status"]         = "ACTIVO"
 
-    log.info(f"✓ Ciclo completo. {len(assets_data)} activos actualizados.")
+    log.info(f"✓ Ciclo completo. {len(assets_data)} activos | Régimen: {regime['regime']}")
 
 def background_loop():
     """Loop en hilo separado."""
@@ -589,15 +824,29 @@ def index():
 
 @app.route("/api/data")
 def api_data():
-    """Devuelve todo: macro + todos los activos + briefing."""
+    """Devuelve todo: macro + activos + briefing + régimen + cambios."""
     with STATE_LOCK:
+        changes = _build_changes(STATE["signal_history"])
         return cors_response({
             "status":      STATE["status"],
             "last_update": STATE["last_update"],
             "briefing":    STATE["briefing"],
             "macro":       STATE["macro"],
             "assets":      _serialize_assets(STATE["assets"]),
+            "regime":      STATE["regime"],
+            "changes":     changes,
+            "events":      EVENTS_CALENDAR,
         })
+
+@app.route("/api/regime")
+def api_regime():
+    with STATE_LOCK:
+        return cors_response(STATE["regime"])
+
+@app.route("/api/changes")
+def api_changes():
+    with STATE_LOCK:
+        return cors_response(_build_changes(STATE["signal_history"]))
 
 @app.route("/api/asset/<asset_id>")
 def api_asset(asset_id):
@@ -645,6 +894,35 @@ def verify_key():
         return cors_response({"ok": True})
     return cors_response({"ok": False, "error": "Clave inválida"}), 401
 
+def _build_changes(signal_history: dict) -> list:
+    """Extrae solo los cambios de señal de las últimas 24h."""
+    changes = []
+    cutoff = datetime.datetime.now() - datetime.timedelta(hours=24)
+    asset_names = {
+        "gold": "ORO", "oil": "PETRÓLEO", "nq": "NASDAQ",
+        "spy": "S&P 500", "dow": "DOW JONES", "dxy": "DÓLAR DXY"
+    }
+    for asset_id, history in signal_history.items():
+        for entry in history:
+            if not entry.get("changed"):
+                continue
+            try:
+                t = datetime.datetime.fromisoformat(entry["time"])
+                if t < cutoff:
+                    continue
+            except:
+                continue
+            changes.append({
+                "asset_id":   asset_id,
+                "asset_name": asset_names.get(asset_id, asset_id.upper()),
+                "signal":     entry["signal"],
+                "score":      entry["score"],
+                "time":       entry["time"],
+                "price":      entry["price"],
+            })
+    changes.sort(key=lambda x: x["time"], reverse=True)
+    return changes[:20]
+
 def _serialize_asset(a: dict) -> dict:
     """Convierte el asset a formato limpio para el frontend."""
     ai  = a.get("ai", {})
@@ -669,13 +947,15 @@ def _serialize_asset(a: dict) -> dict:
         },
         "headlines": ai.get("headlines_scored", []),
         "vars": [
-            {"n": "RSI (14)",    "v": str(pd_.get("rsi", "—")),          "c": _rsi_color(pd_.get("rsi",50))},
-            {"n": "EMA 50/200",  "v": pd_.get("ema_signal","—"),         "c": "up" if pd_.get("ema_signal")=="ALCISTA" else "dn"},
-            {"n": "Volumen Rel.", "v": f"{pd_.get('vol_rel',1):.1f}x",   "c": "up" if pd_.get("vol_rel",1)>1.2 else "neu"},
-            {"n": "ATR",         "v": str(pd_.get("atr","—")),           "c": "neu"},
+            {"n": "RSI (14)",    "v": str(pd_.get("rsi", "—")),               "c": _rsi_color(pd_.get("rsi",50))},
+            {"n": "EMA 50/200",  "v": pd_.get("ema_signal","—"),              "c": "up" if pd_.get("ema_signal")=="ALCISTA" else "dn"},
+            {"n": "Volumen Rel.", "v": f"{pd_.get('vol_rel',1):.1f}x",        "c": "up" if pd_.get("vol_rel",1)>1.2 else "neu"},
+            {"n": "ATR",         "v": str(pd_.get("atr","—")),                "c": "neu"},
             {"n": "Sentimiento", "v": f"{ai.get('sentiment_bull',50)}% Bull", "c": "up" if ai.get("sentiment_bull",50)>50 else "dn"},
-            {"n": "Score Modelo","v": f"{sd.get('score',0):+d} / 100",   "c": _score_color(sd.get("score",0))},
+            {"n": "Score Modelo","v": f"{sd.get('score',0):+d} / 100",        "c": _score_color(sd.get("score",0))},
         ],
+        "convergence": a.get("convergence", {"level": 0, "dir": "MIXTO", "label": "—", "color": "neu", "layers": {}}),
+        "iv_rank":     a.get("iv_rank",     {"rank": 50, "label": "MODERADA", "rec_short": "neutral", "recommendation": "", "atr_pct": 0}),
         "entry": {
             "tipo": entry.get("tipo", "ESPERAR"),
             "zona": entry.get("zona", "—"),
