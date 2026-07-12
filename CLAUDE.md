@@ -24,7 +24,47 @@ Esta tarde (12-jul) se agregó, sobre esa misma base, sin tocar lo que ya funcio
 2. Configurar `RESEND_API_KEY` para correo de bienvenida automático (sigue pendiente, ver más abajo).
 3. Put/Call Ratio — sigue sin fuente gratis viva; con Activos/Screener/Radar AI ya construidos, el PRO tiene bastante profundidad sin este sensor.
 4. Traer Spearman/OBV/BOP sectorial desde Valuation para sumar más sensores a MarketQuake (opcional, no urgente).
-5. Claude real (fase 2) — sigue en pausa por costo. Radar AI ya cubre ese hueco de producto sin ese costo por ahora.
+5. ~~Claude real (fase 2) — en pausa por costo~~ — **revisado 12-jul noche, ver sección de abajo: se reabre, pero acotado.**
+
+## 🔄 EN CURSO 12-jul-2026 noche — Auditoría/rediseño visual de `/intelligence/pro`, módulo por módulo
+
+Juanma pidió repotenciar gráficamente cada módulo del menú, uno a la vez, en el orden del menú (Dashboard → Activos → MarketQuake → Gamma → Macro → Noticias → Cascade → Radar AI → Screener), con este ciclo estricto por módulo: **auditoría → discusión → acuerdo → construcción** — nunca saltar a código antes de acordar el diseño. Ver [[feedback_design]] (memoria de Claude) para el proceso de colaboración completo.
+
+**Dashboard — primer módulo, en prototipo, NO todavía en producción.** Se construyó un prototipo (Claude Artifact, fuera del repo, con datos reales tomados en vivo de `/api/intelligence`) para validar dirección de diseño antes de tocar `intelligence_pro.html`. Decisiones de diseño confirmadas por Juanma para el Dashboard:
+
+- **Arco narrativo de 6 capítulos, no grid de tarjetas sueltas:** 01 Contexto (Régimen/Macro) → 02 Tensión (MarketQuake) → 03 La Causa (Gamma + Cascade juntos) → 04 Lo que viene (Calendario) → 05 La Decisión (Activos) → 06 El Veredicto (Radar AI). Screener queda fuera del arco, como herramienta siempre disponible aparte.
+- **Eliminar la caja uniforme** — cada capítulo compone texto narrativo + su propio micro-gráfico libremente, sin forzar todo al mismo contenedor de tarjeta.
+- **Jerarquía real** — los capítulos "clímax" (Tensión, La Causa, Decisión cuando hay setup, Veredicto) llevan números grandes con gradiente dorado/glow (mismo tratamiento que ya existe en el gauge de producción); los capítulos de contexto quedan visualmente más discretos a propósito.
+- **Todo elemento visual debe representar un dato real, cero decoración** — el sismógrafo mini, la regla de gamma (call/put wall/max pain/spot), la línea de tiempo de eventos, y las barras de proximidad al umbral de señal por activo, todos mapean 1:1 a campos reales que el motor ya calcula. Nada se agrega "porque se ve bien".
+- **Diseñar para todo el rango de estados, no para la foto de hoy** — verificado con dos botones de alternar estado en el prototipo: uno para Gamma (SHORT↔LONG) y otro para Activos (sin setup↔con setup activo), ambos probando que el mismo diseño aguanta cualquier lectura real del mercado sin verse roto.
+- **Filtro de decisión para cualquier ajuste de diseño:** ¿esto ayuda a que alguien que paga $24.99 y prueba 7 días se quede, lo entienda sin ser trader, y el trader experimentado no lo sienta básico?
+
+**Bug real encontrado y corregido en el prototipo:** cuando dos valores de la regla de gamma quedan cerca (ej. Max Pain y Spot), sus etiquetas se encimaban e ilegibles — se corrigió con una función de layout que detecta colisión y apila en una segunda fila. Ojo con este mismo patrón al portar a producción — cualquier visualización de puntos en una recta numérica necesita esta lógica de colisión, no asumir que los valores reales vendrán siempre espaciados.
+
+### Decisión de arquitectura — motor de texto narrativo con IA real, acotado (reabre la decisión de "Claude real: fase 2")
+
+Problema planteado por Juanma: el texto de cada capítulo (y de cada módulo detallado) no puede ser generado con plantillas fijas de Python — por más ramas condicionales que tengan, siguen siendo una lista finita de frases, y con el tiempo un suscriptor que lo usa a diario reconoce el patrón. Eso rompe la sensación de "vivo" que se busca. Solución acordada:
+
+**Una llamada a Claude por sección, disparada solo por evento real (no por reloj de refresh), que devuelve 3 profundidades de texto en una sola respuesta estructurada (JSON):**
+- `resumen_gratuito` — para Intelligence FREE, siempre respetando el muro de pago existente (nunca revela cifras/zonas exactas, nunca revela un nivel de MarketQuake por encima de Precaución — mismo límite que ya existe hoy).
+- `resumen_dashboard` — el capítulo corto del nuevo Dashboard PRO.
+- `explicacion_completa` — el párrafo técnico completo de la pestaña de detalle PRO.
+
+Una sola llamada, un solo razonamiento sobre el mismo hecho real → tres audiencias servidas a la vez, garantizando que nunca digan cosas distintas sobre el mismo hecho (vienen de la misma pasada).
+
+**Disparadores de evento por sección** (reusa el mismo patrón de diff que ya usan `_update_signal_history()` / `_update_marketquake_history()` — comparar contra el último estado guardado, no generar en cada ciclo de `update_all()`):
+1. **Contexto** — cambia el resultado de `detect_regime()`.
+2. **Tensión** — cambia `mq.level` o el set de sensores disparando.
+3. **La Causa** — el régimen de gamma cambia de signo, o cambia el mayor motor de `compute_cascade()`.
+4. **Lo que viene** — un evento del calendario entra a la ventana inminente (cruza el umbral de días).
+5. **La Decisión** — un activo cambia de `ESPERAR` a `LONG`/`SHORT` o viceversa.
+6. **El Veredicto (Radar AI)** — se dispara si CUALQUIERA de las 5 anteriores cambió; sintetiza sus `resumen_dashboard` ya generados. Solo 2 salidas (sin `resumen_gratuito` — Radar AI es 100% exclusivo PRO, no existe en Intelligence FREE).
+
+**Costo estimado:** contando generoso 20-40 eventos reales de cambio al día entre las 6 secciones combinadas, con Haiku 4.5 (~$0.003/llamada) esto queda en **~$3-6/mes** — muy lejos de los $55-60/mes que hicieron posponer "Claude real" originalmente (ese cálculo asumía llamar por cada uno de 6 activos cada 15 min sin condición de cambio real). Esto es un scope mucho más angosto: solo la capa narrativa de Intelligence, disparada por evento, no un análisis continuo.
+
+**Límite explícito acordado — Valuation queda FUERA de este motor de texto con IA.** Valuation sigue siendo descriptivo/gratis por diseño (la separación estricta que Juanma estableció desde el principio: "todo lo que se haga en Intelligence debe superar a Valuation"). Meterle el mismo texto generado por IA a Valuation borraría esa diferencia a propósito. Lo que sí se mantiene (ya existe hoy) es el flujo de **datos** de Valuation → Intelligence vía `valuation_engine.get_data()` (así ya funciona `compute_cascade()`) — eso no cambia, solo no se comparte la capa de texto/IA.
+
+**Estado:** arquitectura acordada con Juanma, todavía no implementada — ni el motor de eventos/Claude, ni el Dashboard rediseñado están en producción. Próximo paso pendiente de retomar: construir el detector de eventos por sección + la función de llamada dual/triple-salida, y solo después portar el prototipo del Dashboard a `intelligence_pro.html` ya conectado a texto real (no al texto de ejemplo escrito a mano que tiene el prototipo hoy).
 
 ## Qué es
 
