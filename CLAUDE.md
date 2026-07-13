@@ -80,6 +80,26 @@ Se portó el prototipo (validado como Claude Artifact) a `templates/intelligence
 
 **Siguiente en la lista de módulos a repotenciar** (mismo ciclo auditoría→discusión→acuerdo→construcción): Activos, luego MarketQuake, Gamma, Macro, Noticias, Cascade, Radar AI, Screener — en ese orden, según lo acordado con Juanma.
 
+## ✅ Actualización 13-jul-2026 madrugada — Módulo Activos repotenciado y EN PRODUCCIÓN
+
+Auditoría encontró: las 6 tarjetas se veían casi idénticas en un día neutral (sin jerarquía), sin indicador de qué tan cerca está cada activo de una señal real, un caso real confuso (Petróleo +4.1% pero score NEUTRAL, sin explicación visible), el desglose de factores en texto plano poco escaneable, e IV Rank en 87-95 para 4 de 6 activos simultáneos (**pendiente que Juanma confirme si el modelo de IV Rank necesita recalibración** — no se tocó, es pregunta de datos, no de diseño).
+
+**Construido:**
+- **Orden por relevancia** — ya no es un orden fijo (Dow/Dólar/Oro/Nasdaq/Petróleo/S&P): primero los que tienen un setup activo, luego por distancia al umbral ±25.
+- **Medidor de proximidad visual** en cada tarjeta (-100 a +100, umbral marcado) en vez de solo el badge de texto.
+- **Frase narrativa por activo** (`_compose_asset_narrative()` en `intelligence_engine.py`) que explica casos como el de Petróleo — corregido un bug real en la primera versión: elegía el factor de mayor magnitud sin filtrar signo, lo que podía señalar a Momentum (que casi siempre acompaña el movimiento) como si "pesara en contra"; ahora filtra específicamente por signo opuesto al `chg_pct`.
+- **Resumen del día** (`_compose_activos_summary()`) arriba del módulo.
+- **Desglose de factores como mini-barras**, no texto plano con números separados por espacios.
+- **Jerarquía real**: tarjeta con setup activo se ve más grande/con glow; en ESPERAR queda más compacta.
+
+**Decisión de arquitectura importante — pedida explícitamente por Juanma:** todas las frases nuevas (`narrative` por activo, `activos_summary` del día) están ancladas al futuro motor de IA acotado desde el día uno — son funciones Python que devuelven un string ya guardado en `STATE`/el dict de cada activo, el frontend solo lee ese campo. Cuando el motor de IA esté listo, se reemplaza el CONTENIDO de esas funciones (plantilla → llamada a Claude), sin tocar una sola línea de `intelligence_pro.html`. Mismo patrón ya aplicado a `analyze_ticker()` (Screener) — reutiliza `_compose_asset_narrative()`.
+
+**Verificado en producción real** con datos en vivo (vía extracción de texto de la página, no solo screenshots — hay un glitch de captura de pantalla específico de la herramienta de automatización al hacer scroll, ver nota abajo): orden correcto (DÓLAR 11 → NASDAQ 7 → DOW -5 → S&P 2 → ORO -1 → PETRÓLEO -1), narrativa de Petróleo corregida mostrando "EMA (-12)" como factor opositor real, resumen del día presente.
+
+**Nota técnica — glitch de la herramienta de captura de pantalla:** durante la verificación se encontró que las capturas de pantalla vía Claude in Chrome se desincronizan del DOM real después de hacer scroll con el mouse (se ve un hueco negro grande con el logo flotando a mitad de pantalla). Confirmado con `elementFromPoint()` que el DOM/layout real está correcto — es un artefacto de la herramienta de automatización, no un bug del sitio. Si se repite en una sesión futura, usar `get_page_text` o `javascript_tool` para verificar contenido en vez de confiar en el screenshot tras hacer scroll.
+
+**Siguiente en la lista:** MarketQuake.
+
 ## Qué es
 
 Segundo producto de pago de Pegasus Trading Tools (junto a [Pegasus Valuation](../pegasus_valuation/CLAUDE.md), que es gratis). Análisis de mercado accionable: régimen, señales por activo, zonas de entrada/salida, y un sistema de alerta temprana ("MarketQuake") basado en confirmación cruzada de sensores institucionales.
