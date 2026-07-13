@@ -100,6 +100,26 @@ Auditoría encontró: las 6 tarjetas se veían casi idénticas en un día neutra
 
 **Siguiente en la lista:** MarketQuake.
 
+## 📋 Diagnóstico 13-jul-2026 madrugada — tareas para la próxima sesión (todavía no construido)
+
+Juanma auditó Gamma, Macro, Screener, Cascade y MarketQuake de una sola vez (sin entrar módulo por módulo como el ciclo habitual) y dio su lectura de los 5. Diagnóstico combinado (su lectura + análisis de causa raíz):
+
+| Módulo | Lo que reportó Juanma | Causa raíz (análisis) | Qué hace falta |
+|---|---|---|---|
+| **Gamma** | No se entienden las barras (izq/der), no sabe para qué le sirve verlo | El gráfico de barras por strike se muestra sin leyenda de la convención visual ni interpretación en español antes del gráfico técnico | Leyenda explícita + párrafo de interpretación ANTES del gráfico, no solo el `gsource-note` técnico que ya existe después |
+| **Macro** | No dice nada, se siente de relleno | Las 3 tarjetas (VIX/DXY/US10Y) son definiciones de libro de texto genéricas, no análisis de hoy; sin tendencia histórica; **no conecta con el impacto macro por activo que el motor YA calcula** (`score_data.details.Macro` de cada uno de los 6 activos) | Mostrar cómo el macro de HOY empuja específicamente a cada activo (dato ya existe) + mini-tendencia 30d por indicador |
+| **Screener** | Vacío sin ticker, no varía mucho al buscar uno | Estado vacío sin guía ni ejemplos; el resultado es solo la tarjeta de números (ya mejorada el 13-jul con narrativa/proximidad, pero sigue sin gráfico de precio ni contexto comparativo) | Estado vacío con tickers sugeridos + mini-gráfico de precio del ticker buscado |
+| **Cascade** | Confuso, no entiende el fin | Mezcla peso mecánico vs correlación estadística sin explicar la diferencia ni la implicación operativa | Párrafo de propósito arriba + cerrar cada hallazgo con su implicación práctica |
+| **MarketQuake** | Buena data pero confuso | Demasiadas piezas simultáneas (gauge+veredicto+estaciones+sismógrafo+4 tabs) sin orden de lectura claro — problema de organización, no de contenido | Simplificar jerarquía de lectura |
+
+**El patrón que conecta los 5 (diagnóstico de fondo):** la data y los gráficos están bien calculados — falta la capa de **interpretación en español llano que diga qué concluir**, no solo qué mirar. Palabras de Juanma: "no estamos entregando nuestra promesa de valor que es leer por ellos el mercado y entregarlo masticado". Esto es exactamente el motor de IA acotado (evento real → Claude, ver arriba) que sigue bloqueado por el pago en console.anthropic.com.
+
+**Plan ordenado para la próxima sesión:**
+1. Intentar resolver el pago de la API de Claude (banco / otra tarjeta) — confirmar si esto destraba todo de un tiro.
+2. Si se resuelve: construir el motor de eventos + llamada a Claude ya diseñado (ver arriba), usarlo como la capa de interpretación que falta en estos 5 módulos.
+3. Si no se resuelve todavía: mejorar cada módulo con contenido real que no depende de IA (conectar Macro con impacto por activo, leyendas en Gamma, etc.).
+4. Auditar/construir en este orden: Gamma → Macro → Cascade → MarketQuake → Screener (ajustable al inicio de la sesión).
+
 ## Qué es
 
 Segundo producto de pago de Pegasus Trading Tools (junto a [Pegasus Valuation](../pegasus_valuation/CLAUDE.md), que es gratis). Análisis de mercado accionable: régimen, señales por activo, zonas de entrada/salida, y un sistema de alerta temprana ("MarketQuake") basado en confirmación cruzada de sensores institucionales.
