@@ -64,7 +64,21 @@ Una sola llamada, un solo razonamiento sobre el mismo hecho real → tres audien
 
 **Límite explícito acordado — Valuation queda FUERA de este motor de texto con IA.** Valuation sigue siendo descriptivo/gratis por diseño (la separación estricta que Juanma estableció desde el principio: "todo lo que se haga en Intelligence debe superar a Valuation"). Meterle el mismo texto generado por IA a Valuation borraría esa diferencia a propósito. Lo que sí se mantiene (ya existe hoy) es el flujo de **datos** de Valuation → Intelligence vía `valuation_engine.get_data()` (así ya funciona `compute_cascade()`) — eso no cambia, solo no se comparte la capa de texto/IA.
 
-**Estado:** arquitectura acordada con Juanma, todavía no implementada — ni el motor de eventos/Claude, ni el Dashboard rediseñado están en producción. Próximo paso pendiente de retomar: construir el detector de eventos por sección + la función de llamada dual/triple-salida, y solo después portar el prototipo del Dashboard a `intelligence_pro.html` ya conectado a texto real (no al texto de ejemplo escrito a mano que tiene el prototipo hoy).
+**Estado:** el motor de texto con IA (evento → Claude → 3 salidas, techo de $8/mes) sigue **acordado pero no implementado** — sin cuenta de facturación activa en console.anthropic.com todavía (tarjeta de Juanma rechazada, pendiente resolver con el banco). El Dashboard rediseñado, en cambio, **ya está en producción y verificado en vivo** — ver la actualización siguiente.
+
+## ✅ Actualización 12-jul-2026 noche — Dashboard de 6 capítulos YA EN PRODUCCIÓN (no solo prototipo)
+
+Se portó el prototipo (validado como Claude Artifact) a `templates/intelligence_pro.html` real, conectado a datos en vivo de `/api/intelligence` — usando el texto de plantillas existente (`detect_regime`, `compute_marketquake`, `compute_radar_ai`, etc.), no el texto de ejemplo escrito a mano del prototipo. El motor de IA acotado (arriba) sigue siendo un reemplazo futuro de ESTE texto de plantillas, cuando esté listo.
+
+**Lo que cambió respecto a la versión anterior del Dashboard** (la de tarjetas `.dcard` en grid, descrita en la actualización del 12-jul tarde): esa versión quedó completamente reemplazada. Ahora es un arco narrativo de 6 capítulos sin caja uniforme, con columna vertebral (spine) conectando: 01 Contexto, 02 Tensión, 03 La Causa, 04 Lo que viene, 05 La Decisión, 06 El Veredicto — más Screener aparte al final. Cada capítulo combina texto + su propio micro-gráfico real (ver detalle de diseño en memoria de Claude, [[feedback_design]]).
+
+**Verificado en vivo contra producción real** (con Claude in Chrome, sesión ya logueada): los 6 capítulos renderizan con datos reales — incluyendo un cambio real de estado observado en la misma sesión (gamma de NQ pasó de SHORT a LONG GAMMA entre una revisión y la siguiente, y el capítulo 3 cambió de rojo a verde automáticamente, con el texto y la regla numérica actualizándose solos). El clic en "ver detalle" navega correctamente a cada pestaña (confirmado disparando el evento de clic directamente, ya que las coordenadas de clic simulado fallaban por desfases de layout, no por un bug real). La posición de scroll del Dashboard se preserva al volver desde un módulo de detalle (confirmado: scroll a 604px → entrar a Macro → resetea a 0 → volver a Dashboard → vuelve a 604px exacto).
+
+**Bug real encontrado y corregido en producción** (no solo en el prototipo): en el capítulo 4, cuando dos eventos del calendario caían muy cerca (2 y 3 días), la segunda fila de la línea de tiempo quedaba a solo 16px de la primera — insuficiente para separar una etiqueta de dos líneas, el texto se encimaba. Corregido subiendo el espaciado de la segunda fila y el alto del contenedor.
+
+**Además, se corrigió un choque de color que venía de antes:** "convicción BAJA" en Radar AI ya no se pinta de rojo (chocaba con la regla verde=alcista/rojo=bajista) — ahora usa `--neu`, un tono dorado apagado reservado para "sin sesgo direccional".
+
+**Siguiente en la lista de módulos a repotenciar** (mismo ciclo auditoría→discusión→acuerdo→construcción): Activos, luego MarketQuake, Gamma, Macro, Noticias, Cascade, Radar AI, Screener — en ese orden, según lo acordado con Juanma.
 
 ## Qué es
 
